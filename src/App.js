@@ -8,7 +8,7 @@ import * as nearAPI from 'near-api-js'
 import Logo from "./images/logo.png"
 import DiscoverPage from "./pages/Discover";
 import HomePage from "./pages/Home";
-import {HashRouter as Router, Link, Route, Switch} from 'react-router-dom'
+import {BrowserRouter as Router, Link, Route, Switch} from 'react-router-dom'
 import {fromNear} from "./components/BuyButton";
 import ls from "local-storage";
 import CardPage from "./pages/Card";
