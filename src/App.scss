@@ -1,4 +1,13 @@
+$primary: #714a9d;
+
+@import "node_modules/bootstrap/scss/bootstrap";
+
 .navbar-brand > img {
-  height: 2em;
+  height: 25px;
   margin-right: 0.5em;
 }
+
+.navbar {
+  height: 80px;
+}
+
