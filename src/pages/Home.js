@@ -1,9 +1,9 @@
 import "./Home.scss";
-import React, { useState } from "react";
-import uuid from "react-uuid";
+import React from "react";
+// import uuid from "react-uuid";
 
 function HomePage(props) {
-  const [gkey] = useState(uuid());
+  // const [gkey] = useState(uuid());
 
   const cards = "";
 

@@ -6,14 +6,14 @@ import * as nearAPI from "near-api-js";
 import Logo from "./images/logo_horizontal_white.png";
 import HomePage from "./pages/Home";
 import { BrowserRouter as Router, Link, Route, Switch } from "react-router-dom";
-import ls from "local-storage";
+// import ls from "local-storage";
 
 const IsMainnet = window.location.hostname === "berry.cards";
 const TestNearConfig = {
   networkId: "testnet",
   nodeUrl: "https://rpc.testnet.near.org",
   archivalNodeUrl: "https://rpc.testnet.internal.near.org",
-  contractName: "dev-1614796345972-8721304",
+  contractName: "app1.skyward-dev.testnet",
   walletUrl: "https://wallet.testnet.near.org",
 };
 const MainNearConfig = {
