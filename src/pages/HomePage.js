@@ -1,22 +1,15 @@
-import "./Home.scss";
+import "./HomePage.scss";
 import React from "react";
 // import uuid from "react-uuid";
 
 function HomePage(props) {
   // const [gkey] = useState(uuid());
 
-  const cards = "";
-
   return (
     <div>
       <div className="container">
         <div className="row justify-content-md-center mb-3">
-          {cards.length > 0 && (
-            <div>
-              <h3>Recent votes</h3>
-              {cards}
-            </div>
-          )}
+          Sales coming up soon
         </div>
       </div>
     </div>

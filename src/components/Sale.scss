@@ -1,0 +1,21 @@
+.price-history {
+  @media (min-width: 460px) {
+    display: inline-block;
+    width: calc(100% - 26rem);
+    min-width: 24rem;
+    vertical-align: top;
+  }
+}
+
+.sale-token {
+  background: #eee;
+  border: 1px solid #ddd;
+}
+
+.sale-token-input {
+  margin-bottom: 0;
+}
+
+.sale-token-output {
+  margin-bottom: 0.5rem;
+}

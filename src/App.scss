@@ -1,13 +1,27 @@
-$primary: #714a9d;
+$primary: #f27841;
+// $primary: #00C08B;
 
 @import "node_modules/bootstrap/scss/bootstrap";
 
 .navbar-brand > img {
   height: 25px;
-  margin-right: 0.5em;
+  margin-left: 1.5em;
+  margin-right: 2em;
 }
 
-.navbar {
-  height: 80px;
+.navbar-dark .navbar-nav .nav-link {
+  color: #fff;
 }
 
+.btn-outline-primary {
+  &:hover {
+    color: #fff;
+  }
+}
+
+.btn-primary {
+  color: #eee;
+  &:hover, &:active, &:focus {
+    color: #fff;
+  }
+}
