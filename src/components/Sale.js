@@ -48,18 +48,21 @@ export default function Sale(props) {
     ? extraDepositBalance
     : sale.totalShares.mul(extraDepositBalance).div(sale.inTokenRemaining);
 
+  const subInTotalShares = (
+    (sale.subscription && sale.subscription.shares) ||
+    Big(0)
+  ).add(subInExtraShares);
+
   const subOutTokens = sale.outTokens.map((o) => {
     return {
       tokenAccountId: o.tokenAccountId,
-      remaining:
-        sale.subscription && sale.subscription.shares.gt(0)
-          ? sale.subscription.shares
-              .add(subInExtraShares)
-              .mul(o.remaining)
-              .div(sale.totalShares)
-          : sale.totalShares.eq(0) && subInToken.gt(0)
-          ? Big(o.remaining)
-          : Big(0),
+      remaining: sale.totalShares.gt(0)
+        ? subInTotalShares
+            .mul(o.remaining)
+            .div(sale.totalShares.add(subInExtraShares))
+        : subInToken.gt(0)
+        ? Big(o.remaining)
+        : Big(0),
     };
   });
 
