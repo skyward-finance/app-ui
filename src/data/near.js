@@ -93,12 +93,21 @@ async function _initNear() {
     return nearAPI.utils.serialize.base_decode(block.header.hash);
   };
 
-  _near.createTransaction = (receiverId, actions, blockHash, offset) =>
+  _near.fetchNextNonce = async () => {
+    const accessKeys = await _near.account.getAccessKeys();
+    console.log(accessKeys);
+    return accessKeys.reduce(
+      (nonce, accessKey) => Math.max(nonce, accessKey.access_key.nonce + 1),
+      1
+    );
+  };
+
+  _near.createTransaction = (receiverId, actions, blockHash, nonce) =>
     nearAPI.transactions.createTransaction(
       _near.accountId,
       randomPublicKey,
       receiverId,
-      new Date().getTime() + (offset || 0),
+      nonce,
       actions,
       blockHash
     );

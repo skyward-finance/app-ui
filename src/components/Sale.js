@@ -92,8 +92,10 @@ export default function Sale(props) {
     const amount = toTokenBalance(inToken, extraDeposit);
     const transactions = [];
 
-    let nonceOffset = 0;
-    const blockHash = await account.near.fetchBlockHash();
+    let [nonce, blockHash] = await Promise.all([
+      account.near.fetchNextNonce(),
+      account.near.fetchBlockHash(),
+    ]);
 
     const skywardBalance =
       sale.inTokenAccountId in account.balances
@@ -119,7 +121,7 @@ export default function Sale(props) {
             ),
           ],
           blockHash,
-          nonceOffset++
+          nonce++
         )
       );
     }
@@ -190,7 +192,7 @@ export default function Sale(props) {
           sale.inTokenAccountId,
           inTokenActions,
           blockHash,
-          nonceOffset++
+          nonce++
         )
       );
     }
@@ -211,7 +213,7 @@ export default function Sale(props) {
           ),
         ],
         blockHash,
-        nonceOffset++
+        nonce++
       )
     );
 
