@@ -54,7 +54,7 @@ export const useSales = singletonHook(defaultSales, () => {
     }
     const fetchSales = async () => {
       const rawSales = await account.near.contract.get_sales({
-        account_id: account.accountId,
+        account_id: account.accountId || undefined,
       });
       return rawSales.map(mapSale);
     };

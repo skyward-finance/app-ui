@@ -81,7 +81,7 @@ export const toTokenBalance = (token, balance) => {
 };
 
 export const availableNearBalance = (account) => {
-  if (account && !account.loading) {
+  if (account && !account.loading && account.state) {
     let balance = Big(account.state.amount).sub(
       Big(account.state.storage_usage).mul(Big(NearConfig.storageCostPerByte))
     );

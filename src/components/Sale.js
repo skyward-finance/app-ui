@@ -66,7 +66,7 @@ export default function Sale(props) {
   let availableInToken = Big(0);
   let nativeNearBalance = availableNearBalance(account);
 
-  if (account && !account.loading) {
+  if (account && !account.loading && account.accountId) {
     if (sale.inTokenAccountId in account.balances) {
       availableInToken = availableInToken.add(
         account.balances[sale.inTokenAccountId]
@@ -226,7 +226,7 @@ export default function Sale(props) {
           <div className="card-body">
             Price history
             <br />
-            Coming soon
+            <span className="text-muted">Coming soon</span>
           </div>
         </div>
         <div className="sale-preview card m-2">
@@ -241,7 +241,7 @@ export default function Sale(props) {
           </div>
         </div>
       </div>
-      <div>
+      {account && account.accountId ? (
         <div className="card m-2">
           <h5 className="card-header">Your sale subscription</h5>
           <div className="card-body">
@@ -341,7 +341,11 @@ export default function Sale(props) {
             )}
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="alert alert-warning">
+          Sign in to subscribe to this sale
+        </div>
+      )}
     </div>
   );
 }
