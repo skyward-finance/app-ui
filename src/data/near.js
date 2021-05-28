@@ -19,6 +19,7 @@ const TestNearConfig = {
   archivalNodeUrl: "https://rpc.testnet.internal.near.org",
   contractName: "app1.2.skyward-dev.testnet",
   wrapNearAccountId: "wrap_near.2.skyward-dev.testnet",
+  skywardTokenAccountId: "token.2.skyward-dev.testnet",
   walletUrl: "https://wallet.testnet.near.org",
   storageCostPerByte: StorageCostPerByte,
 };

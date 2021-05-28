@@ -23,8 +23,9 @@ import {
 } from "../data/near";
 import * as nearAPI from "near-api-js";
 import AvailableInput from "./AvailableInput";
-import { mapSale } from "../data/sales";
 import ls from "local-storage";
+import TokenBalance from "./TokenBalance";
+import { useSales } from "../data/sales";
 
 const DepositMode = "Deposit";
 const WithdrawMode = "Withdrawal";
@@ -40,9 +41,18 @@ export default function Subscription(props) {
   );
   const [inBalance, setInBalance] = useState(null);
   const sale = props.sale;
+  const sales = useSales();
 
   const account = useAccount();
   const inToken = useToken(sale.inTokenAccountId);
+
+  const subscription = sale.subscription || {
+    claimedOutBalance: sale.outTokens.map(() => Big(0)),
+    spentInBalance: Big(0),
+    remainingInBalance: Big(0),
+    unclaimedOutBalances: sale.outTokens.map(() => Big(0)),
+    shares: Big(0),
+  };
 
   let availableInToken = Big(0);
   let nativeNearBalance = availableNearBalance(account);
@@ -67,26 +77,21 @@ export default function Subscription(props) {
     }
   }
   const availableInTokenHuman = fromTokenBalance(inToken, availableInToken);
+  const subRemainingInBalanceHuman = fromTokenBalance(
+    inToken,
+    subscription.remainingInBalance
+  );
 
-  const subInTokenOrig = sale.subscription
-    ? sale.subscription.remainingInBalance
-    : Big(0);
-  const subInTokenOrigHuman = fromTokenBalance(inToken, subInTokenOrig);
-
-  let extraDepositBalance = extraDeposit
-    ? toTokenBalance(inToken, extraDeposit)
-    : Big(0);
+  let extraDepositBalance = toTokenBalance(inToken, extraDeposit || Big(0));
   if (extraDepositBalance.gt(availableInToken)) {
     extraDepositBalance = availableInToken;
   }
-  let withdrawAmountBalance = withdrawAmount
-    ? toTokenBalance(inToken, withdrawAmount)
-    : Big(0);
-  if (withdrawAmountBalance.gt(subInTokenOrig)) {
-    withdrawAmountBalance = subInTokenOrig;
+  let withdrawAmountBalance = toTokenBalance(inToken, withdrawAmount || Big(0));
+  if (withdrawAmountBalance.gt(subscription.remainingInBalance)) {
+    withdrawAmountBalance = subscription.remainingInBalance;
   }
 
-  const subInToken = subInTokenOrig
+  const subInToken = subscription.remainingInBalance
     .add(extraDepositBalance)
     .sub(withdrawAmountBalance);
 
@@ -96,14 +101,13 @@ export default function Subscription(props) {
         .mul(extraDepositBalance.sub(withdrawAmountBalance))
         .div(sale.inTokenRemaining);
 
-  const subInTotalShares = (
-    (sale.subscription && sale.subscription.shares) ||
-    Big(0)
-  ).add(subInExtraShares);
+  const subInTotalShares = subscription.shares.add(subInExtraShares);
 
-  const subOutTokens = sale.outTokens.map((o) => {
+  const subOutTokens = sale.outTokens.map((o, i) => {
     return {
       tokenAccountId: o.tokenAccountId,
+      remainingLabel: "EXPECTED: ",
+      distributedLabel: "RECEIVED: ",
       remaining: sale.totalShares.gt(0)
         ? subInTotalShares
             .mul(o.remaining)
@@ -111,6 +115,9 @@ export default function Subscription(props) {
         : subInToken.gt(0)
         ? Big(o.remaining)
         : Big(0),
+      distributed: subscription.claimedOutBalance[i].add(
+        subscription.unclaimedOutBalances[i]
+      ),
     };
   });
 
@@ -223,21 +230,14 @@ export default function Subscription(props) {
 
   const withdrawFromSale = async (e) => {
     e.preventDefault();
-    const maxWithdraw = withdrawAmount.eq(subInTokenOrigHuman);
+    const maxWithdraw = withdrawAmount.eq(subRemainingInBalanceHuman);
     let amount = withdrawAmountBalance;
     const actions = [];
 
-    const freshSale = mapSale(
-      await account.near.contract.get_sale({
-        sale_id: sale.saleId,
-        account_id: account.accountId,
-      })
-    );
-    const freshRemainingIn = freshSale.subscription.remainingInBalance;
+    await sale.refresh();
+    const freshRemainingIn = sale.subscription.remainingInBalance;
     const maxReceiveAmount = freshRemainingIn
-      .mul(
-        Big((freshSale.remainingDuration - 60e3) / freshSale.remainingDuration)
-      )
+      .mul(Big((sale.remainingDuration - 60e3) / sale.remainingDuration))
       .round();
     if (maxWithdraw) {
       amount = maxReceiveAmount;
@@ -317,15 +317,26 @@ export default function Subscription(props) {
     await account.near.sendTransactions(actions);
   };
 
+  const claimOut = async (e) => {
+    e.preventDefault();
+    await account.near.contract.sale_claim_out_tokens(
+      {
+        sale_id: sale.saleId,
+      },
+      TGas.mul(20).toFixed(0)
+    );
+    await sales.refreshSale(sale.saleId);
+  };
+
   return account && account.accountId ? (
     <div className="card m-2">
-      <h5 className="card-header">Your sale subscription</h5>
       <div className="card-body">
         <SaleInputOutputs
-          inputLabel="You are Paying"
+          inputLabel="You Deposited"
           inTokenAccountId={sale.inTokenAccountId}
           inTokenRemaining={subInToken}
-          outputLabel="Expecting to Receive"
+          inTokenPaid={subscription.spentInBalance}
+          outputLabel="You Receiving"
           outTokens={subOutTokens}
         />
         <Rate
@@ -342,15 +353,24 @@ export default function Subscription(props) {
               className="btn btn-primary m-1"
               onClick={() => setMode(DepositMode)}
             >
-              <i className="bi bi-box-arrow-in-right" /> Deposit{" "}
-              <TokenSymbol tokenAccountId={sale.inTokenAccountId} />
+              Deposit <TokenSymbol tokenAccountId={sale.inTokenAccountId} />
             </button>
             <button
-              className="btn btn-outline-primary m-1"
+              className="btn btn-primary m-1"
               onClick={() => setMode(WithdrawMode)}
             >
-              <i className="bi bi-box-arrow-left" /> Withdraw{" "}
-              <TokenSymbol tokenAccountId={sale.inTokenAccountId} />
+              Withdraw <TokenSymbol tokenAccountId={sale.inTokenAccountId} />
+            </button>
+            <button
+              className="btn btn-success m-1"
+              onClick={(e) => claimOut(e)}
+            >
+              Claim{" "}
+              <TokenBalance
+                tokenAccountId={sale.outTokens[0].tokenAccountId}
+                balance={subscription.unclaimedOutBalances[0]}
+              />{" "}
+              <TokenSymbol tokenAccountId={sale.outTokens[0].tokenAccountId} />
             </button>
           </div>
         ) : mode === DepositMode ? (
@@ -403,7 +423,7 @@ export default function Subscription(props) {
             <AvailableInput
               value={withdrawAmount}
               setValue={(v) => setWithdrawAmount(v)}
-              limit={subInTokenOrigHuman}
+              limit={subRemainingInBalanceHuman}
             />
             <div className="form-check">
               <input
@@ -425,7 +445,8 @@ export default function Subscription(props) {
               <button
                 className="btn btn-warning m-1"
                 disabled={
-                  !withdrawAmount || withdrawAmount.gt(subInTokenOrigHuman)
+                  !withdrawAmount ||
+                  withdrawAmount.gt(subRemainingInBalanceHuman)
                 }
                 type="button"
                 onClick={(e) => withdrawFromSale(e)}

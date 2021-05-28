@@ -2,7 +2,7 @@ import "./TokenSymbol.scss";
 import React from "react";
 import { useToken } from "../data/token";
 
-function TokenSymbol(props) {
+export default function TokenSymbol(props) {
   const tokenAccountId = props.tokenAccountId;
   const token = useToken(tokenAccountId);
   return (
@@ -17,5 +17,3 @@ function TokenSymbol(props) {
     </span>
   );
 }
-
-export default TokenSymbol;

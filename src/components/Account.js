@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { useAccount } from "../data/account";
-import AccountRegisterToken from "./AccountRegisterToken";
 import uuid from "react-uuid";
-import TokenAndBalance from "./TokenAndBalance";
+import AccountBalance from "./AccountBalance";
 
 function Account(props) {
   const [gkey] = useState(uuid());
@@ -10,16 +9,12 @@ function Account(props) {
 
   const balances =
     account && !account.loading
-      ? Object.entries(account.balances).map(([tokenAccountId, balance]) => {
-          const key = `${gkey}-${tokenAccountId}`;
-          return (
-            <TokenAndBalance
-              key={key}
-              tokenAccountId={tokenAccountId}
-              balance={balance}
-            />
-          );
-        })
+      ? Object.entries(account.balances).map(([tokenAccountId, _balance]) => (
+          <AccountBalance
+            key={`${gkey}-${tokenAccountId}`}
+            tokenAccountId={tokenAccountId}
+          />
+        ))
       : [];
 
   return (
@@ -27,12 +22,15 @@ function Account(props) {
       {account.loading ? (
         <div>Loading...</div>
       ) : account.accountId ? (
-        <div>
-          <div>{account.accountId}</div>
-          <div>Balances</div>
-          <div>{balances}</div>
-          <div>
-            <AccountRegisterToken />
+        <div className="card">
+          <div className="card-body">
+            <h5>Account {account.accountId}</h5>
+            <hr />
+            <div>Balances</div>
+            <div>{balances}</div>
+            {/*<div>*/}
+            {/*  <AccountRegisterToken />*/}
+            {/*</div>*/}
           </div>
         </div>
       ) : (

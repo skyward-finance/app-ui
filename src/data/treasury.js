@@ -13,13 +13,15 @@ export const useTreasury = singletonHook(defaultTreasury, () => {
   const _near = useNear();
 
   _near.then(async (near) => {
-    const rawBalances = await near.contract.get_treasury_balances();
-    const skywardTotalSupply = Big(
-      await near.contract.get_skyward_total_supply()
-    );
-    const listingFee = Big(await near.contract.get_listing_fee());
+    let [rawBalances, skywardTotalSupply, listingFee] = await Promise.all([
+      near.contract.get_treasury_balances(),
+      near.contract.get_skyward_total_supply(),
+      near.contract.get_listing_fee(),
+    ]);
+    skywardTotalSupply = Big(skywardTotalSupply);
+    listingFee = Big(listingFee);
     const balances = {};
-    rawBalances.forEach((tokenAccountId, rawBalance) => {
+    rawBalances.forEach(([tokenAccountId, rawBalance]) => {
       balances[tokenAccountId] = Big(rawBalance);
     });
 

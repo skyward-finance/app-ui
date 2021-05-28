@@ -9,6 +9,7 @@ import { BrowserRouter as Router, Link, Route, Switch } from "react-router-dom";
 import AccountPage from "./pages/AccountPage";
 import { NearConfig, useNear } from "./data/near";
 import SalePage from "./pages/SalePage";
+import TreasuryPage from "./pages/TreasuryPage";
 
 function App(props) {
   const [connected, setConnected] = useState(false);
@@ -160,6 +161,9 @@ function App(props) {
               <AccountPage {...passProps} />
             </Route>
           )}
+          <Route exact path={"/treasury"}>
+            <TreasuryPage {...passProps} />
+          </Route>
           <Route exact path={"/sale/:saleId"}>
             <SalePage {...passProps} />
           </Route>

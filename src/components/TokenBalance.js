@@ -2,7 +2,7 @@ import React from "react";
 import { useToken } from "../data/token";
 import { bigToString, fromTokenBalance } from "../data/utils";
 
-function TokenBalance(props) {
+export default function TokenBalance(props) {
   const tokenAccountId = props.tokenAccountId;
   const balance = props.balance;
   const token = useToken(tokenAccountId);
@@ -12,5 +12,3 @@ function TokenBalance(props) {
     </span>
   );
 }
-
-export default TokenBalance;

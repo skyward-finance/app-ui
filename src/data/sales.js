@@ -23,7 +23,7 @@ export const mapSale = (s) => {
   s = keysToCamel(s);
   s.outTokens.forEach((o) => {
     o.remaining = Big(o.remaining);
-    o.distributed = Big(o.remaining);
+    o.distributed = Big(o.distributed);
     if (o.treasuryUnclaimed) {
       o.treasuryUnclaimed = Big(o.treasuryUnclaimed);
     }
@@ -52,17 +52,37 @@ export const useSales = singletonHook(defaultSales, () => {
     if (!account.near) {
       return;
     }
+    const fetchSale = async (saleId) => {
+      return mapSale(
+        await account.near.contract.get_sale({
+          sale_id: saleId,
+          account_id: account.accountId || undefined,
+        })
+      );
+    };
+
     const fetchSales = async () => {
       const rawSales = await account.near.contract.get_sales({
         account_id: account.accountId || undefined,
       });
       return rawSales.map(mapSale);
     };
+    const refreshSale = async (saleId) => {
+      const sale = await fetchSale(saleId);
+      setSales((prev) =>
+        Object.assign({}, prev, {
+          sales: Object.assign([], prev.sales, { [saleId]: sale }),
+        })
+      );
+    };
+
     fetchSales().then((sales) => {
       setSales((prev) => {
         return {
           loading: false,
           sales: prev.sales.concat(sales),
+          fetchSale,
+          refreshSale,
         };
       });
     });

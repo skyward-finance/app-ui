@@ -1,12 +1,12 @@
 import React from "react";
-import Account from "../components/Account";
+import Treasury from "../components/Treasury";
 
-export default function AccountPage(props) {
+export default function TreasuryPage(props) {
   return (
     <div>
       <div className="container">
         <div className="row mb-3">
-          <Account {...props} />
+          <Treasury {...props} />
         </div>
       </div>
     </div>

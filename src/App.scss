@@ -1,7 +1,12 @@
+
 $primary: #f27841;
 // $primary: #00C08B;
 
 @import "node_modules/bootstrap/scss/bootstrap";
+
+body, html {
+  background: #f7f7f7;
+}
 
 .navbar-brand > img {
   height: 25px;

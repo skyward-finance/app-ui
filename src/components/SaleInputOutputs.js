@@ -1,3 +1,4 @@
+import "./SaleInputOutputs.scss";
 import TokenAndBalance from "./TokenAndBalance";
 import React, { useState } from "react";
 import uuid from "react-uuid";
@@ -12,7 +13,10 @@ export default function SaleInputOutputs(props) {
       <TokenAndBalance
         className="sale-token-input"
         tokenAccountId={sale.inTokenAccountId || props.inTokenAccountId}
-        balance={sale.inTokenRemaining || props.inTokenRemaining}
+        balances={[
+          ["PAID: ", sale.inTokenPaid || props.inTokenPaid],
+          ["REMAINING: ", sale.inTokenRemaining || props.inTokenRemaining],
+        ]}
       />
       <div className="text-center" style={{ position: "relative" }}>
         <label
@@ -30,7 +34,10 @@ export default function SaleInputOutputs(props) {
             key={key}
             className="sale-token-output"
             tokenAccountId={o.tokenAccountId}
-            balance={o.remaining}
+            balances={[
+              [o.distributedLabel || "DISTRIBUTED: ", o.distributed],
+              [o.remainingLabel || "REMAINING: ", o.remaining],
+            ]}
           />
         );
       })}
