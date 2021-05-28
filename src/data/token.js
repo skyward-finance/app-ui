@@ -3,6 +3,7 @@ import ls from "local-storage";
 import { isValidAccountId, keysToCamel } from "./utils";
 import useSWR from "swr";
 import { useAccount } from "./account";
+import { LsKey } from "./near";
 
 const TokenExpirationDuration = 7 * 24 * 60 * 60 * 1000;
 const NotFoundExpiration = 24 * 60 * 60 * 1000;
@@ -13,7 +14,7 @@ export const getTokenFetcher = async (_key, tokenAccountId, account) => {
       invalidAccount: true,
     };
   }
-  const lsKey = account.near.lsKey + "tokens:" + tokenAccountId;
+  const lsKey = LsKey + "tokens:" + tokenAccountId;
   const localToken = ls.get(lsKey);
   const time = new Date().getTime();
 

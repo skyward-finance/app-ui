@@ -95,22 +95,44 @@ async function _initNear() {
 
   _near.fetchNextNonce = async () => {
     const accessKeys = await _near.account.getAccessKeys();
-    console.log(accessKeys);
     return accessKeys.reduce(
       (nonce, accessKey) => Math.max(nonce, accessKey.access_key.nonce + 1),
       1
     );
   };
 
-  _near.createTransaction = (receiverId, actions, blockHash, nonce) =>
-    nearAPI.transactions.createTransaction(
-      _near.accountId,
-      randomPublicKey,
-      receiverId,
-      nonce,
-      actions,
-      blockHash
-    );
+  _near.sendTransactions = async (items) => {
+    let [nonce, blockHash] = await Promise.all([
+      _near.fetchNextNonce(),
+      _near.fetchBlockHash(),
+    ]);
+
+    const transactions = [];
+    let actions = [];
+    let currentReceiverId = null;
+    items.push([null, null]);
+    items.forEach(([receiverId, action]) => {
+      if (receiverId !== currentReceiverId) {
+        if (currentReceiverId !== null) {
+          transactions.push(
+            nearAPI.transactions.createTransaction(
+              _near.accountId,
+              randomPublicKey,
+              currentReceiverId,
+              nonce++,
+              actions,
+              blockHash
+            )
+          );
+          actions = [];
+        }
+        currentReceiverId = receiverId;
+      }
+      actions.push(action);
+    });
+    return await _near.walletConnection.requestSignTransactions(transactions);
+  };
+
   return _near;
 }
 

@@ -32,7 +32,7 @@ export const useAccount = singletonHook(defaultAccount, () => {
           }),
           near.account.state(),
         ]);
-        rawBalances.forEach((tokenAccountId, rawBalance) => {
+        rawBalances.forEach(([tokenAccountId, rawBalance]) => {
           account.balances[tokenAccountId] = Big(rawBalance);
         });
         account.state = state;

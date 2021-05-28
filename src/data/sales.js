@@ -19,7 +19,7 @@ const mapSubscription = (s) => {
   };
 };
 
-const mapSale = (s) => {
+export const mapSale = (s) => {
   s = keysToCamel(s);
   s.outTokens.forEach((o) => {
     o.remaining = Big(o.remaining);
