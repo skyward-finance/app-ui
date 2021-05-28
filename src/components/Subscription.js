@@ -223,8 +223,8 @@ export default function Subscription(props) {
 
   const withdrawFromSale = async (e) => {
     e.preventDefault();
+    const maxWithdraw = withdrawAmount.eq(subInTokenOrigHuman);
     let amount = withdrawAmountBalance;
-    const maxWithdraw = amount.eq(subInTokenOrig);
     const actions = [];
 
     const freshSale = mapSale(
