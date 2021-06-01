@@ -8,6 +8,18 @@ import { LsKey } from "./near";
 const TokenExpirationDuration = 7 * 24 * 60 * 60 * 1000;
 const NotFoundExpiration = 24 * 60 * 60 * 1000;
 
+export const isTokenRegistered = async (account, tokenAccountId, accountId) => {
+  return !!(await account.near.account.viewFunction(
+    tokenAccountId,
+    "storage_balance_of",
+    {
+      account_id: accountId,
+    }
+  ));
+};
+
+// const tokenBalances = {};
+
 export const getTokenFetcher = async (_key, tokenAccountId, account) => {
   if (!isValidAccountId(tokenAccountId)) {
     return {
@@ -20,6 +32,15 @@ export const getTokenFetcher = async (_key, tokenAccountId, account) => {
 
   const contract = {
     balanceOf: async (accountId) => {
+      /*
+      const balances = tokenBalances[tokenAccountId] || {};
+      tokenBalances[tokenAccountId] = balances;
+      if (!fresh && accountId in balances) {
+        return balances[accountId];
+      }
+      (balances[accountId] =
+       */
+
       return Big(
         await account.near.account.viewFunction(
           tokenAccountId,
@@ -30,15 +51,8 @@ export const getTokenFetcher = async (_key, tokenAccountId, account) => {
         )
       );
     },
-    isRegistered: async (accountId) => {
-      return !!(await account.near.account.viewFunction(
-        tokenAccountId,
-        "storage_balance_of",
-        {
-          account_id: accountId,
-        }
-      ));
-    },
+    isRegistered: async (accountId) =>
+      isTokenRegistered(account, tokenAccountId, accountId),
   };
 
   if (localToken && localToken.expires > time) {

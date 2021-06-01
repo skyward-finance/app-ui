@@ -21,12 +21,17 @@ export default function AvailableInput(props) {
           onChange={(e) => {
             e.preventDefault();
             let v = value;
-            try {
-              v = Big(e.target.value);
-              if (v.lt(0)) {
-                v = v.mul(-1);
-              }
-            } catch (e) {}
+            const nv = e.target.value;
+            if (nv.length > 0) {
+              try {
+                v = Big(nv);
+                if (v.lt(0)) {
+                  v = v.mul(-1);
+                }
+              } catch (e) {}
+            } else {
+              v = null;
+            }
             setValue(v);
           }}
         />

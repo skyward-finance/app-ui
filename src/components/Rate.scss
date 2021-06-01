@@ -1,4 +1,21 @@
 .rate {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: space-between;
+}
+
+.rate-title {
+  flex: 1 1;
+}
+
+.rate-body {
+  flex: 1 1;
+  cursor: pointer;
+  text-align: end;
+  white-space: nowrap;
+}
+
+.rate-value {
   color: #000;
   font-weight: bold;
 }

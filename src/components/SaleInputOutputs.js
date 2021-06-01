@@ -7,16 +7,28 @@ export default function SaleInputOutputs(props) {
   const [gkey] = useState(uuid());
   const sale = props.sale || {};
 
+  const inputBalances = props.detailed
+    ? [
+        ["PAID: ", sale.inTokenPaid || props.inTokenPaid],
+        ["REMAINING: ", sale.inTokenRemaining || props.inTokenRemaining],
+      ]
+    : [["", sale.inTokenRemaining || props.inTokenRemaining]];
+
+  const outputBalances = (o) =>
+    props.detailed
+      ? [
+          [o.distributedLabel || "DISTRIBUTED: ", o.distributed],
+          [o.remainingLabel || "REMAINING: ", o.remaining],
+        ]
+      : [["", o.remaining]];
+
   return (
     <div>
       <label className="text-muted">{props.inputLabel || "Total Paying"}</label>
       <TokenAndBalance
         className="sale-token-input"
         tokenAccountId={sale.inTokenAccountId || props.inTokenAccountId}
-        balances={[
-          ["PAID: ", sale.inTokenPaid || props.inTokenPaid],
-          ["REMAINING: ", sale.inTokenRemaining || props.inTokenRemaining],
-        ]}
+        balances={inputBalances}
       />
       <div className="text-center" style={{ position: "relative" }}>
         <label
@@ -34,10 +46,7 @@ export default function SaleInputOutputs(props) {
             key={key}
             className="sale-token-output"
             tokenAccountId={o.tokenAccountId}
-            balances={[
-              [o.distributedLabel || "DISTRIBUTED: ", o.distributed],
-              [o.remainingLabel || "REMAINING: ", o.remaining],
-            ]}
+            balances={outputBalances(o)}
           />
         );
       })}

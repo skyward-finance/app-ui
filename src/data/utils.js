@@ -1,10 +1,19 @@
 import Big from "big.js";
 import { NearConfig } from "./near";
+import React from "react";
 
 const MinAccountIdLen = 2;
 const MaxAccountIdLen = 64;
 const ValidAccountRe = /^(([a-z\d]+[-_])*[a-z\d]+\.)*([a-z\d]+[-_])*[a-z\d]+$/;
 const AccountSafetyMargin = Big(10).pow(24).div(2);
+
+export const Loading = (
+  <span
+    className="spinner-grow spinner-grow-sm me-1"
+    role="status"
+    aria-hidden="true"
+  />
+);
 
 export function isValidAccountId(accountId) {
   return (
@@ -47,16 +56,21 @@ export const keysToCamel = function (o) {
   return o;
 };
 
-export const bigToString = (b, p) => {
+export const bigToString = (b, p, len) => {
   if (b === null) {
     return "???";
   }
   let s = b.toFixed();
   const pos = s.indexOf(".");
   p = p || 6;
-  if (pos > 0 && pos + p + 1 < s.length) {
-    return s.substring(0, pos + p + 1);
+  len = len || 7;
+  if (pos > 0) {
+    p = Math.min(p, Math.max(len - pos, 1));
+    if (pos + p + 1 < s.length) {
+      s = s.substring(0, pos + p + 1);
+    }
   }
+
   return s;
 };
 

@@ -1,7 +1,10 @@
 .sale-preview {
   @media (min-width: 60rem) {
-    display: inline-block;
-    width: 28rem;
+    width: 30rem;
     vertical-align: top;
   }
+}
+
+.sale-title {
+  text-decoration: none;
 }

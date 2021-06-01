@@ -26,7 +26,16 @@ body, html {
 
 .btn-primary {
   color: #eee;
-  &:hover, &:active, &:focus {
+  &:hover, &:active, &:focus, &:disabled {
     color: #fff;
+  }
+}
+
+.flex-buttons {
+  display: flex;
+  flex-flow: row wrap;
+
+  .btn {
+    flex: 1 1;
   }
 }

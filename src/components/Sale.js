@@ -12,18 +12,19 @@ export default function Sale(props) {
   return (
     <div>
       <div>
-        <h2>{sale.title || "Noname sale"}</h2>
-        <div className="price-history card m-2">
+        <div className="card m-2">
+          <div className="card-body">
+            <h2>{sale.title || "Noname sale"}</h2>
+            <hr />
+            <SaleInputOutputs sale={sale} detailed />
+            <Rate title="Current Rate" sale={sale} />
+          </div>
+        </div>
+        <div className="card m-2">
           <div className="card-body">
             Price history
             <br />
             <span className="text-muted">Coming soon</span>
-          </div>
-        </div>
-        <div className="sale-preview card m-2">
-          <div className="card-body">
-            <SaleInputOutputs sale={sale} />
-            <Rate title="Current Rate" sale={sale} />
           </div>
         </div>
         <div className="card m-2">

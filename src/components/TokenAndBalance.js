@@ -8,9 +8,9 @@ export default function TokenAndBalance(props) {
   const [gkey] = useState(uuid());
 
   return (
-    <div className={`alert sale-token ${props.className || ""}`}>
+    <div className={`sale-token ${props.className || ""}`}>
       <TokenBadge tokenAccountId={props.tokenAccountId} />{" "}
-      <div className="float-end text-end balances text-nowrap">
+      <div className="balances text-end">
         {props.balances.map(([label, balance], i) => (
           <div key={`${gkey}-${i}`}>
             <span className="text-muted">{label}</span>

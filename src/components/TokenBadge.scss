@@ -1,15 +1,17 @@
 .token-badge {
-  max-width: 40%;
   vertical-align: middle;
+  flex-grow: 1;
+  min-width: 10rem;
 
   .token-name {
     color: #666;
   }
 
   img {
-    width: 24px;
-    height: 24px;
-    border-radius: 12px;
+    width: 32px;
+    height: 32px;
+    border-radius: 16px;
     vertical-align: middle;
+    margin-right: 0.5em;
   }
 }

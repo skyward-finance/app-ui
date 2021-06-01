@@ -1,5 +1,13 @@
 .sale-token {
   background: #eee;
   border: 1px solid #f7f7f7;
-  height: 5rem;
+  border-radius: 1rem;
+  position: relative;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  min-height: 2rem;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  align-items: center;
 }

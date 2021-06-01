@@ -5,10 +5,10 @@ import { Link } from "react-router-dom";
 import RemainingDuration from "./RemainingDuration";
 import SaleInputOutputs from "./SaleInputOutputs";
 import Rate from "./Rate";
-import Big from "big.js";
 
 export default function SalePreview(props) {
   const sale = props.sale;
+  /*
   const subscription = sale.subscription || {
     claimedOutBalance: sale.outTokens.map(() => Big(0)),
     spentInBalance: Big(0),
@@ -31,20 +31,7 @@ export default function SalePreview(props) {
       ),
     };
   });
-
-  return (
-    <div className="sale-preview card m-2">
-      <div className="card-body">
-        <Link to={`/sale/${sale.saleId}`}>
-          <h5>{sale.title || "Noname sale"}</h5>
-        </Link>
-        <hr />
-        <SaleInputOutputs sale={sale} />
-        <Rate sale={sale} />
-        <hr />
-        <RemainingDuration sale={sale} />
-        {sale.subscription && (
-          <div>
+  <div>
             <hr />
             <SaleInputOutputs
               inputLabel="You are Paying"
@@ -55,10 +42,27 @@ export default function SalePreview(props) {
               outTokens={subOutTokens}
             />
           </div>
-        )}
+   */
+
+  return (
+    <div className="sale-preview card m-2">
+      <div className="card-body">
+        <Link to={`/sale/${sale.saleId}`} className="sale-title">
+          <h5>{sale.title || "Noname sale"}</h5>
+        </Link>
+        <hr />
+        <SaleInputOutputs sale={sale} />
+        <Rate sale={sale} />
+        <hr />
+        <RemainingDuration sale={sale} />
         <div className="d-grid gap-2">
-          <Link to={`/sale/${sale.saleId}`} className="btn btn-primary">
-            Details
+          <Link
+            to={`/sale/${sale.saleId}`}
+            className={`btn mt-2 ${
+              sale.subscription ? "btn-primary" : "btn-outline-primary"
+            }`}
+          >
+            {sale.subscription ? "Your subscription" : "Details"}
           </Link>
         </div>
       </div>

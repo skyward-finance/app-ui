@@ -1,11 +1,12 @@
 import "./Rate.scss";
-import React from "react";
+import React, { useState } from "react";
 import TokenSymbol from "./TokenSymbol";
 import Big from "big.js";
 import { bigToString, fromTokenBalance } from "../data/utils";
 import { useToken } from "../data/token";
 
 export default function Rate(props) {
+  const [inv, setInv] = useState(false);
   const sale = props.sale || {};
   const outTokens = sale.outTokens || props.outTokens;
   const out = outTokens[0];
@@ -21,20 +22,23 @@ export default function Rate(props) {
   const inversePrice = price && price.gt(0) ? Big(1).div(price) : null;
 
   return (
-    <div className="clearfix">
-      {props.title || "Rate"}
+    <div className="rate">
+      <div className="rate-title">{props.title || "Rate"}</div>
       {price ? (
-        <div className="float-end text-muted">
-          <div>
-            1 <TokenSymbol tokenAccountId={inTokenAccountId} /> ={" "}
-            <span className="rate">{bigToString(price)}</span>{" "}
-            <TokenSymbol tokenAccountId={out.tokenAccountId} />
-          </div>
-          <div>
-            1 <TokenSymbol tokenAccountId={out.tokenAccountId} /> ={" "}
-            <span className="rate">{bigToString(inversePrice)}</span>{" "}
-            <TokenSymbol tokenAccountId={inTokenAccountId} />
-          </div>
+        <div className="rate-body text-muted" onClick={() => setInv(!inv)}>
+          {inv ? (
+            <div>
+              1 <TokenSymbol tokenAccountId={out.tokenAccountId} /> ={" "}
+              <span className="rate-value">{bigToString(inversePrice)}</span>{" "}
+              <TokenSymbol tokenAccountId={inTokenAccountId} />
+            </div>
+          ) : (
+            <div>
+              1 <TokenSymbol tokenAccountId={inTokenAccountId} /> ={" "}
+              <span className="rate-value">{bigToString(price)}</span>{" "}
+              <TokenSymbol tokenAccountId={out.tokenAccountId} />
+            </div>
+          )}
         </div>
       ) : (
         <div className="float-end text-muted">???</div>

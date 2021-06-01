@@ -151,6 +151,10 @@ function App(props) {
             </div>
           </div>
         </nav>
+        <div className="alert alert-warning">
+          This is a testnet version of the Skyward Finance app. The mainnet app
+          and the mainnet $SKYWARD token are not live. There is no ERC-20 token.
+        </div>
 
         <Switch>
           <Route exact path={"/"}>
