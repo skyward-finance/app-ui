@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useAccount } from "../data/account";
 import uuid from "react-uuid";
 import AccountBalance from "./AccountBalance";
+import { Loading } from "../data/utils";
 
 function Account(props) {
   const [gkey] = useState(uuid());
@@ -18,23 +19,19 @@ function Account(props) {
       : [];
 
   return (
-    <div>
+    <div className="card">
       {account.loading ? (
-        <div>Loading...</div>
-      ) : account.accountId ? (
-        <div className="card">
-          <div className="card-body">
-            <h5>Account {account.accountId}</h5>
-            <hr />
-            <div>Balances</div>
-            <div>{balances}</div>
-            {/*<div>*/}
-            {/*  <AccountRegisterToken />*/}
-            {/*</div>*/}
-          </div>
-        </div>
+        <div className="card-body">{Loading} loading...</div>
       ) : (
-        <div>Sign in please</div>
+        <div className="card-body">
+          <h5>Account {account.accountId}</h5>
+          <hr />
+          <div>Balances</div>
+          <div>{balances}</div>
+          {/*<div>*/}
+          {/*  <AccountRegisterToken />*/}
+          {/*</div>*/}
+        </div>
       )}
     </div>
   );

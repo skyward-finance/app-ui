@@ -3,6 +3,7 @@ import uuid from "react-uuid";
 import TokenAndBalance from "./TokenAndBalance";
 import { useTreasury } from "../data/treasury";
 import { NearConfig } from "../data/near";
+import { Loading } from "../data/utils";
 
 function Account(props) {
   const [gkey] = useState(uuid());
@@ -23,24 +24,24 @@ function Account(props) {
       : [];
 
   return (
-    <div>
+    <div className="card">
       {treasury.loading ? (
-        <div>Loading...</div>
+        <div className="card-body">{Loading} loading...</div>
       ) : (
-        <div className="card">
-          <div className="card-body">
-            <h5>Treasury</h5>
-            <hr />
-            <div>
-              Skyward Total Supply
-              <TokenAndBalance
-                tokenAccountId={NearConfig.skywardTokenAccountId}
-                balances={[["", treasury.skywardTotalSupply]]}
-              />
-            </div>
-            <div>Treasury Balances</div>
-            <div>{balances}</div>
+        <div className="card-body">
+          <h5>Treasury</h5>
+          <hr />
+          <div>
+            Skyward Total Supply
+            <TokenAndBalance
+              tokenAccountId={NearConfig.skywardTokenAccountId}
+              balances={[["", treasury.skywardTotalSupply]]}
+            />
           </div>
+          <div className={"text-muted"}>Redeeming coming soon...</div>
+          <hr />
+          <div>Treasury Balances</div>
+          <div>{balances}</div>
         </div>
       )}
     </div>

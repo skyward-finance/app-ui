@@ -18,6 +18,8 @@ export default function Sale(props) {
             <hr />
             <SaleInputOutputs sale={sale} detailed />
             <Rate title="Current Rate" sale={sale} />
+            <hr />
+            <RemainingDuration sale={sale} />
           </div>
         </div>
         <div className="card m-2">
@@ -25,11 +27,6 @@ export default function Sale(props) {
             Price history
             <br />
             <span className="text-muted">Coming soon</span>
-          </div>
-        </div>
-        <div className="card m-2">
-          <div className="card-body">
-            <RemainingDuration sale={sale} />
           </div>
         </div>
       </div>

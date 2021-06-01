@@ -10,6 +10,7 @@ import AccountPage from "./pages/AccountPage";
 import { NearConfig, useNear } from "./data/near";
 import SalePage from "./pages/SalePage";
 import TreasuryPage from "./pages/TreasuryPage";
+import CreateSalePage from "./pages/CreateSalePage";
 
 function App(props) {
   const [connected, setConnected] = useState(false);
@@ -146,12 +147,23 @@ function App(props) {
                     Treasury
                   </Link>
                 </li>
+                {signedIn && (
+                  <li className="nav-item">
+                    <Link
+                      className="nav-link"
+                      aria-current="page"
+                      to={`/create_sale/`}
+                    >
+                      Create Sale
+                    </Link>
+                  </li>
+                )}
               </ul>
               <form className="d-flex">{header}</form>
             </div>
           </div>
         </nav>
-        <div className="alert alert-warning">
+        <div className="alert alert-warning text-center">
           This is a testnet version of the Skyward Finance app. The mainnet app
           and the mainnet $SKYWARD token are not live. There is no ERC-20 token.
         </div>
@@ -171,6 +183,11 @@ function App(props) {
           <Route exact path={"/sale/:saleId"}>
             <SalePage {...passProps} />
           </Route>
+          {signedIn && (
+            <Route exact path={"/create_sale/"}>
+              <CreateSalePage {...passProps} />
+            </Route>
+          )}
         </Switch>
       </Router>
     </div>
