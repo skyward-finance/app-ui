@@ -24,7 +24,7 @@ function Account(props) {
         <div className="card-body">{Loading} loading...</div>
       ) : (
         <div className="card-body">
-          <h5>Account {account.accountId}</h5>
+          <h2 className="primary-header">Account {account.accountId}</h2>
           <hr />
           <div>Balances</div>
           <div>{balances}</div>

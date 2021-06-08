@@ -1,18 +1,30 @@
-
-$primary: #f27841;
+$primary: darken(#684e83, 10%);
+// $primary: #f27841;
 // $primary: #00C08B;
+$primary-gradient: linear-gradient(5deg, #f6bf75, #d77185, #8766ac, #4150b1);
+$simple-gradient: linear-gradient(5deg, #8766ac, #4150b1);
 
 @import "node_modules/bootstrap/scss/bootstrap";
 
 body, html {
   background: #f7f7f7;
+  -webkit-font-smoothing: antialiased;
+}
+
+.navbar-bg {
+  background: $primary-gradient;
 }
 
 .navbar-brand > img {
   height: 25px;
-  margin-left: 1.5em;
-  margin-right: 2em;
+  margin-left: 1rem;
+  margin-right: 1rem;
 }
+
+.navbar-brand {
+  padding: 0 0.6rem;
+}
+
 
 .navbar-dark .navbar-nav .nav-link {
   color: #fff;
@@ -20,15 +32,22 @@ body, html {
 
 .btn-outline-primary {
   &:hover {
+    background: $primary-gradient;
     color: #fff;
   }
 }
 
 .btn-primary {
   color: #eee;
+  background: $simple-gradient;
   &:hover, &:active, &:focus, &:disabled {
+    background: $primary-gradient;
     color: #fff;
   }
+}
+
+.progress-bar {
+  background: $simple-gradient;
 }
 
 .flex-buttons {
@@ -37,5 +56,27 @@ body, html {
 
   .btn {
     flex: 1 1;
+  }
+}
+
+.primary-header {
+  background: $primary-gradient;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+a {
+  .primary-header {
+    background: $simple-gradient;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  &:hover, &:active, &:focus, &:disabled {
+    .primary-header {
+      background: $primary-gradient;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
   }
 }

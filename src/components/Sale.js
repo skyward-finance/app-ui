@@ -14,7 +14,9 @@ export default function Sale(props) {
       <div>
         <div className="card m-2">
           <div className="card-body">
-            <h2>{sale.title || "Noname sale"}</h2>
+            <h2 className="sale-title primary-header">
+              {sale.title || "Noname sale"}
+            </h2>
             <hr />
             <SaleInputOutputs sale={sale} detailed />
             <Rate title="Current Rate" sale={sale} />

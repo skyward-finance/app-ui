@@ -20,13 +20,14 @@ export default function RemainingDuration(props) {
       </div>
       <div className="progress">
         <div
-          className="progress-bar progress-bar-striped bg-success"
+          className="progress-bar"
           role="progressbar"
           aria-valuenow={progress}
-          aria-valuemin="0"
-          aria-valuemax="100"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          style={{ minWidth: `${progress}%` }}
         >
-          {progress}%
+          <div>{progress}%</div>
         </div>
       </div>
       <div className="text-center">

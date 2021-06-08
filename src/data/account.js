@@ -1,6 +1,6 @@
 import { singletonHook } from "react-singleton-hook";
 import { useEffect, useState } from "react";
-import { useNear } from "./near";
+import { noInternetMode, useNear } from "./near";
 import Big from "big.js";
 
 const defaultAccount = {
@@ -42,7 +42,20 @@ export const useAccount = singletonHook(defaultAccount, () => {
   const _near = useNear();
 
   useEffect(() => {
-    _near.then(async (near) => await loadAccount(near, setAccount));
+    _near.then(async (near) => {
+      try {
+        await loadAccount(near, setAccount);
+      } catch (e) {
+        if (noInternetMode) {
+          setAccount({
+            loading: false,
+            near,
+            accountId: "test.testnet",
+            balances: {},
+          });
+        }
+      }
+    });
   }, [_near]);
 
   return account;

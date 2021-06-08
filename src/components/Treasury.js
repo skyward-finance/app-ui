@@ -29,7 +29,7 @@ function Account(props) {
         <div className="card-body">{Loading} loading...</div>
       ) : (
         <div className="card-body">
-          <h5>Treasury</h5>
+          <h2 className="primary-header">Treasury</h2>
           <hr />
           <div>
             Skyward Total Supply

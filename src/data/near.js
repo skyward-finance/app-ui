@@ -12,6 +12,8 @@ export const randomPublicKey = nearAPI.utils.PublicKey.from(
   "ed25519:8fWHD35Rjd78yeowShh9GwhRudRtLLsGCRjZtgPjAtw9"
 );
 
+export const noInternetMode = window.location.hostname === "localhost";
+
 const IsMainnet = window.location.hostname === "berry.cards";
 const TestNearConfig = {
   networkId: "testnet",

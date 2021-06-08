@@ -3,7 +3,7 @@ import "error-polyfill";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "bootstrap/dist/js/bootstrap.bundle";
 import "./App.scss";
-import Logo from "./images/logo_horizontal_white.png";
+import Logo from "./images/logo_horizontal_brand.png";
 import SalesPage from "./pages/SalesPage";
 import { BrowserRouter as Router, Link, Route, Switch } from "react-router-dom";
 import AccountPage from "./pages/AccountPage";
@@ -93,7 +93,7 @@ function App(props) {
   return (
     <div className="App">
       <Router basename={process.env.PUBLIC_URL}>
-        <nav className="navbar navbar-expand-lg navbar-dark bg-primary mb-3">
+        <nav className="navbar navbar-expand-lg navbar-dark navbar-bg mb-3">
           <div className="container-fluid">
             <a
               className="navbar-brand"

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import Big from "big.js";
 import { useAccount } from "./account";
 import { keysToCamel } from "./utils";
+import { NearConfig, noInternetMode } from "./near";
 
 const defaultSales = {
   loading: true,
@@ -76,16 +77,60 @@ export const useSales = singletonHook(defaultSales, () => {
       );
     };
 
-    fetchSales().then((sales) => {
-      setSales((prev) => {
-        return {
-          loading: false,
-          sales: prev.sales.concat(sales),
-          fetchSale,
-          refreshSale,
-        };
+    fetchSales()
+      .then((sales) => {
+        setSales((prev) => {
+          return {
+            loading: false,
+            sales: prev.sales.concat(sales),
+            fetchSale,
+            refreshSale,
+          };
+        });
+      })
+      .catch(() => {
+        if (noInternetMode) {
+          const duration = 2 * 31 * 24 * 60 * 60 * 1000;
+          const startTime = new Date().getTime() - Math.trunc(duration * 0.42);
+          setSales(() => {
+            return {
+              loading: false,
+              sales: [
+                {
+                  saleId: 0,
+                  title: "Founding 5% $SKYWARD sale",
+                  inTokenAccountId: NearConfig.wrapNearAccountId,
+                  outTokens: [
+                    {
+                      tokenAccountId: NearConfig.skywardTokenAccountId,
+                      remaining: Big("1000000000000000000000000"),
+                      distributed: Big("1000000000000000000000000"),
+                    },
+                  ],
+                  inTokenRemaining: Big("100000000000000000000000000"),
+                  inTokenPaidUnclaimed: Big("100000000000000000000000000"),
+                  inTokenPaid: Big("100000000000000000000000000"),
+                  totalShares: Big("100000000000000000000000000"),
+                  startTime,
+                  startDate: new Date(startTime),
+                  duration,
+                  endDate: new Date(startTime + duration),
+                  remainingDuration:
+                    startTime + duration - new Date().getTime(),
+                  currentDate: new Date(),
+                  // subscription: null,
+                  //     claimedOutBalance: Big(0),
+                  //     spentInBalance: Big(s.spentInBalance),
+                  //     remainingInBalance: Big(s.remainingInBalance),
+                  //     unclaimedOutBalances: s.unclaimedOutBalances.map(Big),
+                  //     shares: Big(s.shares),
+                  //   };
+                },
+              ],
+            };
+          });
+        }
       });
-    });
   }, [account]);
 
   return sales;
