@@ -5,9 +5,13 @@ import uuid from "react-uuid";
 
 export default function AvailableInput(props) {
   const [inputId] = useState(uuid());
+  const [isMax, setIsMax] = useState(false);
   const limit = props.limit;
   const value = props.value;
   const setValue = props.setValue;
+  if (isMax && !limit.eq(value || Big(0))) {
+    setTimeout(() => setValue(limit), 1);
+  }
 
   return (
     <div className="input-group mb-3">
@@ -20,6 +24,7 @@ export default function AvailableInput(props) {
           value={value || ""}
           onChange={(e) => {
             e.preventDefault();
+            setIsMax(false);
             let v = value;
             const nv = e.target.value;
             if (nv.length > 0) {
@@ -40,7 +45,7 @@ export default function AvailableInput(props) {
       <button
         className="btn btn-outline-secondary"
         type="button"
-        onClick={() => setValue(limit)}
+        onClick={() => setIsMax(true)}
       >
         MAX
       </button>

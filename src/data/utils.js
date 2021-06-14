@@ -1,6 +1,7 @@
 import Big from "big.js";
-import { NearConfig } from "./near";
+import { LsKey, NearConfig } from "./near";
 import React from "react";
+import ls from "local-storage";
 
 const MinAccountIdLen = 2;
 const MaxAccountIdLen = 64;
@@ -104,4 +105,17 @@ export const availableNearBalance = (account) => {
     }
   }
   return Big(0);
+};
+
+export const referralLsKey = (saleId) => {
+  return LsKey + "referral:" + saleId;
+};
+
+export const getCurrentReferralId = (saleId) => {
+  const refLsKey = referralLsKey(saleId);
+  const ref = ls.get(refLsKey);
+  if (ref && ref.expires > new Date().getTime()) {
+    return ref.referralId;
+  }
+  return null;
 };

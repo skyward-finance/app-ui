@@ -9,6 +9,7 @@ import {
   availableNearBalance,
   bigToString,
   fromTokenBalance,
+  getCurrentReferralId,
   Loading,
   toTokenBalance,
 } from "../data/utils";
@@ -97,37 +98,65 @@ export default function Subscription(props) {
     .add(extraDepositBalance)
     .sub(withdrawAmountBalance);
 
-  const subInExtraShares = sale.totalShares.eq(0)
-    ? extraDepositBalance
-    : sale.totalShares
-        .mul(extraDepositBalance.sub(withdrawAmountBalance))
-        .div(sale.inTokenRemaining);
+  const subInExtraShares =
+    sale.totalShares.eq(0) || sale.inTokenRemaining.eq(0)
+      ? extraDepositBalance
+      : sale.totalShares
+          .mul(extraDepositBalance.sub(withdrawAmountBalance))
+          .div(sale.inTokenRemaining);
 
   const subInTotalShares = subscription.shares.add(subInExtraShares);
+
+  const adjustForReferral = (balance, subscription, outToken) => {
+    if (!outToken.referralBpt) {
+      return balance;
+    }
+    const referralAmount = balance.mul(outToken.referralBpt).div(10000);
+    if (subscription.referralId) {
+      return balance.sub(referralAmount.div(2));
+    } else {
+      return balance.sub(referralAmount);
+    }
+  };
+
+  const resShares = sale.totalShares.add(subInExtraShares);
 
   const subOutTokens = sale.outTokens.map((o, i) => {
     return {
       tokenAccountId: o.tokenAccountId,
       remainingLabel: "EXPECTED: ",
       distributedLabel: "RECEIVED: ",
-      remaining: sale.totalShares.gt(0)
-        ? subInTotalShares
-            .mul(o.remaining)
-            .div(sale.totalShares.add(subInExtraShares))
+      remaining: resShares.gt(0)
+        ? subInTotalShares.mul(o.remaining).div(resShares)
         : subInToken.gt(0)
         ? Big(o.remaining)
         : Big(0),
-      distributed: subscription.claimedOutBalance[i].add(
-        subscription.unclaimedOutBalances[i]
+      distributed: adjustForReferral(
+        subscription.claimedOutBalance[i].add(
+          subscription.unclaimedOutBalances[i]
+        ),
+        subscription,
+        o
       ),
     };
   });
+
+  let claimBalance = adjustForReferral(
+    subscription.unclaimedOutBalances[0],
+    subscription,
+    sale.outTokens[0]
+  );
 
   const subscribeToSale = async (e) => {
     e.preventDefault();
     setLoading(true);
     const amount = toTokenBalance(inToken, extraDeposit);
     const actions = [];
+
+    let referralId = getCurrentReferralId(sale.saleId) || undefined;
+    if (referralId === account.accountId) {
+      referralId = undefined;
+    }
 
     const skywardBalance =
       sale.inTokenAccountId in account.balances
@@ -221,9 +250,9 @@ export default function Subscription(props) {
         {
           sale_id: sale.saleId,
           amount: amount.toFixed(0),
-          // TODO: referral
+          referral_id: referralId,
         },
-        TGas.mul(15).toFixed(0),
+        TGas.mul(200).toFixed(0),
         SubscribeDeposit.toFixed(0)
       ),
     ]);
@@ -395,40 +424,46 @@ export default function Subscription(props) {
           outTokens={subOutTokens}
           detailed
         />
-        <Rate
-          title="Expected Rate"
-          inTokenAccountId={sale.inTokenAccountId}
-          inTokenRemaining={subInToken}
-          outputLabel="Expecting to Receive"
-          outTokens={subOutTokens}
-        />
+        {!sale.ended() && (
+          <Rate
+            title="Expected Rate"
+            inTokenAccountId={sale.inTokenAccountId}
+            inTokenRemaining={subInToken}
+            outputLabel="Expecting to Receive"
+            outTokens={subOutTokens}
+          />
+        )}
         <hr />
         {!mode ? (
           <div className="flex-buttons">
-            <button
-              className="btn btn-primary m-1"
-              disabled={loading}
-              onClick={() => setMode(DepositMode)}
-            >
-              Deposit <TokenSymbol tokenAccountId={sale.inTokenAccountId} />
-            </button>
-            <button
-              className="btn btn-primary m-1"
-              disabled={loading}
-              onClick={() => setMode(WithdrawMode)}
-            >
-              Withdraw <TokenSymbol tokenAccountId={sale.inTokenAccountId} />
-            </button>
+            {!sale.ended() && (
+              <button
+                className="btn btn-primary m-1"
+                disabled={loading}
+                onClick={() => setMode(DepositMode)}
+              >
+                Deposit <TokenSymbol tokenAccountId={sale.inTokenAccountId} />
+              </button>
+            )}
+            {!sale.ended() && (
+              <button
+                className="btn btn-primary m-1"
+                disabled={loading}
+                onClick={() => setMode(WithdrawMode)}
+              >
+                Withdraw <TokenSymbol tokenAccountId={sale.inTokenAccountId} />
+              </button>
+            )}
             <button
               className="btn btn-success m-1"
-              disabled={loading}
+              disabled={loading || claimBalance.eq(0)}
               onClick={(e) => claimOut(e)}
             >
               {loading && Loading}
               Claim{" "}
               <TokenBalance
                 tokenAccountId={sale.outTokens[0].tokenAccountId}
-                balance={subscription.unclaimedOutBalances[0]}
+                balance={claimBalance}
               />{" "}
               <TokenSymbol tokenAccountId={sale.outTokens[0].tokenAccountId} />
             </button>

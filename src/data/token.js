@@ -5,17 +5,18 @@ import useSWR from "swr";
 import { useAccount } from "./account";
 import { LsKey } from "./near";
 
-const TokenExpirationDuration = 7 * 24 * 60 * 60 * 1000;
-const NotFoundExpiration = 24 * 60 * 60 * 1000;
+const TokenExpirationDuration = 30 * 60 * 1000;
+const NotFoundExpiration = 60 * 1000;
 
 export const isTokenRegistered = async (account, tokenAccountId, accountId) => {
-  return !!(await account.near.account.viewFunction(
+  const storageBalance = await account.near.account.viewFunction(
     tokenAccountId,
     "storage_balance_of",
     {
       account_id: accountId,
     }
-  ));
+  );
+  return storageBalance && storageBalance.total !== "0";
 };
 
 // const tokenBalances = {};
@@ -56,12 +57,9 @@ export const getTokenFetcher = async (_key, tokenAccountId, account) => {
   };
 
   if (localToken && localToken.expires > time) {
-    return Object.assign(
-      {
-        contract,
-      },
-      localToken.data
-    );
+    const token = Object.assign({}, localToken.data, { contract });
+    token.totalSupply = Big(token.totalSupply);
+    return token;
   }
   if (!account) {
     return null;
@@ -74,6 +72,7 @@ export const getTokenFetcher = async (_key, tokenAccountId, account) => {
       account.near.account.viewFunction(tokenAccountId, "ft_total_supply"),
     ]);
     token = {
+      contract,
       metadata: keysToCamel(metadata),
       totalSupply: Big(totalSupply),
     };
@@ -90,7 +89,9 @@ export const getTokenFetcher = async (_key, tokenAccountId, account) => {
   }
   ls.set(lsKey, {
     expires: time + expiration,
-    data: token,
+    data: Object.assign({}, token, {
+      totalSupply: token.totalSupply.toFixed(0),
+    }),
   });
   return token;
 };

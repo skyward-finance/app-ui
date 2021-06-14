@@ -17,8 +17,11 @@ const mapSubscription = (s) => {
     remainingInBalance: Big(s.remainingInBalance),
     unclaimedOutBalances: s.unclaimedOutBalances.map(Big),
     shares: Big(s.shares),
+    referralId: s.referralId,
   };
 };
+
+const saleRefreshTimers = {};
 
 export const mapSale = (s) => {
   s = keysToCamel(s);
@@ -42,6 +45,8 @@ export const mapSale = (s) => {
   if (s.subscription) {
     s.subscription = mapSubscription(s.subscription);
   }
+  s.started = () => s.remainingDuration < s.duration;
+  s.ended = () => s.remainingDuration === 0;
   return s;
 };
 
@@ -61,20 +66,37 @@ export const useSales = singletonHook(defaultSales, () => {
         })
       );
     };
-
-    const fetchSales = async () => {
-      const rawSales = await account.near.contract.get_sales({
-        account_id: account.accountId || undefined,
-      });
-      return rawSales.map(mapSale);
-    };
+    let setupAutoRefresh = null;
     const refreshSale = async (saleId) => {
       const sale = await fetchSale(saleId);
+      setupAutoRefresh(sale);
       setSales((prev) =>
         Object.assign({}, prev, {
           sales: Object.assign([], prev.sales, { [saleId]: sale }),
         })
       );
+    };
+
+    setupAutoRefresh = (sale) => {
+      clearInterval(saleRefreshTimers[sale.saleId]);
+      if (!sale.ended()) {
+        saleRefreshTimers[sale.saleId] = setInterval(
+          async () => {
+            if (!document.hidden) {
+              await refreshSale(sale.saleId);
+            }
+          },
+          sale.started() ? 1000 : 10000
+        );
+      }
+    };
+    const fetchSales = async () => {
+      const rawSales = await account.near.contract.get_sales({
+        account_id: account.accountId || undefined,
+      });
+      const sales = rawSales.map(mapSale);
+      sales.forEach(setupAutoRefresh);
+      return sales;
     };
 
     fetchSales()

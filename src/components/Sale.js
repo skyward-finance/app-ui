@@ -5,6 +5,7 @@ import RemainingDuration from "./RemainingDuration";
 import SaleInputOutputs from "./SaleInputOutputs";
 import Rate from "./Rate";
 import Subscription from "./Subscription";
+import ReferralLink from "./ReferralLink";
 
 export default function Sale(props) {
   const sale = props.sale;
@@ -33,6 +34,7 @@ export default function Sale(props) {
         </div>
       </div>
       <Subscription sale={sale} />
+      <ReferralLink sale={sale} />
     </div>
   );
 }

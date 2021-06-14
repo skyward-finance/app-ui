@@ -32,10 +32,10 @@ function Account(props) {
           <h2 className="primary-header">Treasury</h2>
           <hr />
           <div>
-            Skyward Total Supply
+            Skyward Circulating Supply
             <TokenAndBalance
               tokenAccountId={NearConfig.skywardTokenAccountId}
-              balances={[["", treasury.skywardTotalSupply]]}
+              balances={[["", treasury.skywardCirculatingSupply]]}
             />
           </div>
           <div className={"text-muted"}>Redeeming coming soon...</div>
