@@ -160,17 +160,17 @@ function App(props) {
                     </Link>
                   </li>
                 )}
-                {signedIn && !IsMainnet && (
-                  <li className="nav-item">
-                    <Link
-                      className="nav-link"
-                      aria-current="page"
-                      to={`/link_mainnet/`}
-                    >
-                      Claim Mainnet $SKYWARD
-                    </Link>
-                  </li>
-                )}
+                {/*{signedIn && !IsMainnet && (*/}
+                {/*  <li className="nav-item">*/}
+                {/*    <Link*/}
+                {/*      className="nav-link"*/}
+                {/*      aria-current="page"*/}
+                {/*      to={`/link_mainnet/`}*/}
+                {/*    >*/}
+                {/*      Claim Mainnet $SKYWARD*/}
+                {/*    </Link>*/}
+                {/*  </li>*/}
+                {/*)}*/}
               </ul>
               <form className="d-flex">{header}</form>
             </div>

@@ -169,7 +169,7 @@ export default function LinkMainnetPage(props) {
                       balances={[
                         ["LOCKED: ", mainnetBalance],
                         [
-                          "EXPECTED REAL $SKYWARD:",
+                          "EXPECTED REAL $SKYWARD: ",
                           mainnetBalance.div(50).round(),
                         ],
                       ]}
