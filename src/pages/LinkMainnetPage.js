@@ -40,12 +40,22 @@ export default function LinkMainnetPage(props) {
   }, [mainnetNear]);
 
   useEffect(() => {
-    mainnetNear.then((near) => {
-      setMainnetSignedIn(!!near.accountId);
-      setMainnetSignedAccountId(near.accountId);
-      setMainnetConnected(true);
-    });
-  }, [mainnetNear]);
+    if (account && account.accountId) {
+      mainnetNear.then((near) => {
+        console.log(account, near);
+        if (near.accountId === account.accountId) {
+          localStorage.removeItem(near.walletConnection._authDataKey);
+          setMainnetSignedIn(false);
+          setMainnetSignedAccountId(null);
+          setMainnetConnected(true);
+        } else {
+          setMainnetSignedIn(!!near.accountId);
+          setMainnetSignedAccountId(near.accountId);
+          setMainnetConnected(true);
+        }
+      });
+    }
+  }, [mainnetNear, account]);
 
   const mainnetSignInButton = !mainnetConnected ? (
     <div>
@@ -216,7 +226,10 @@ export default function LinkMainnetPage(props) {
 }
 
 async function _initMainnetNear() {
-  const keyStore = new nearAPI.keyStores.BrowserLocalStorageKeyStore();
+  const keyStore = new nearAPI.keyStores.BrowserLocalStorageKeyStore(
+    localStorage,
+    "mainnet"
+  );
   const nearConnection = await nearAPI.connect(
     Object.assign({ deps: { keyStore } }, MainNearConfig)
   );

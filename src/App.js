@@ -160,17 +160,17 @@ function App(props) {
                     </Link>
                   </li>
                 )}
-                {/*{signedIn && !IsMainnet && (*/}
-                {/*  <li className="nav-item">*/}
-                {/*    <Link*/}
-                {/*      className="nav-link"*/}
-                {/*      aria-current="page"*/}
-                {/*      to={`/link_mainnet/`}*/}
-                {/*    >*/}
-                {/*      Claim Mainnet $SKYWARD*/}
-                {/*    </Link>*/}
-                {/*  </li>*/}
-                {/*)}*/}
+                {signedIn && !IsMainnet && (
+                  <li className="nav-item">
+                    <Link
+                      className="nav-link"
+                      aria-current="page"
+                      to={`/claim_mainnet/`}
+                    >
+                      Claim Mainnet $SKYWARD
+                    </Link>
+                  </li>
+                )}
               </ul>
               <form className="d-flex">{header}</form>
             </div>
@@ -205,7 +205,7 @@ function App(props) {
             </Route>
           )}
           {signedIn && !IsMainnet && (
-            <Route exact path={"/link_mainnet/"}>
+            <Route exact path={"/claim_mainnet/"}>
               <LinkMainnetPage {...passProps} />
             </Route>
           )}
