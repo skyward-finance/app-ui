@@ -7,10 +7,11 @@ import Logo from "./images/logo_horizontal_brand.png";
 import SalesPage from "./pages/SalesPage";
 import { BrowserRouter as Router, Link, Route, Switch } from "react-router-dom";
 import AccountPage from "./pages/AccountPage";
-import { NearConfig, useNear } from "./data/near";
+import { IsMainnet, NearConfig, useNear } from "./data/near";
 import SalePage from "./pages/SalePage";
 import TreasuryPage from "./pages/TreasuryPage";
 import CreateSalePage from "./pages/CreateSalePage";
+import LinkMainnetPage from "./pages/LinkMainnetPage";
 
 function App(props) {
   const [connected, setConnected] = useState(false);
@@ -24,6 +25,7 @@ function App(props) {
       e && e.preventDefault();
       const appTitle = "Skyward Finance";
       const near = await _near;
+
       await near.walletConnection.requestSignIn(
         NearConfig.contractName,
         appTitle
@@ -158,15 +160,29 @@ function App(props) {
                     </Link>
                   </li>
                 )}
+                {signedIn && !IsMainnet && (
+                  <li className="nav-item">
+                    <Link
+                      className="nav-link"
+                      aria-current="page"
+                      to={`/link_mainnet/`}
+                    >
+                      Claim Mainnet $SKYWARD
+                    </Link>
+                  </li>
+                )}
               </ul>
               <form className="d-flex">{header}</form>
             </div>
           </div>
         </nav>
-        <div className="alert alert-warning text-center">
-          This is a testnet version of the Skyward Finance app. The mainnet app
-          and the mainnet $SKYWARD token are not live. There is no ERC-20 token.
-        </div>
+        {!IsMainnet && (
+          <div className="alert alert-warning text-center">
+            This is a testnet version of the Skyward Finance app. The mainnet
+            app and the mainnet $SKYWARD token are not live. There is no ERC-20
+            token.
+          </div>
+        )}
 
         <Switch>
           <Route exact path={"/"}>
@@ -186,6 +202,11 @@ function App(props) {
           {signedIn && (
             <Route exact path={"/create_sale/"}>
               <CreateSalePage {...passProps} />
+            </Route>
+          )}
+          {signedIn && !IsMainnet && (
+            <Route exact path={"/link_mainnet/"}>
+              <LinkMainnetPage {...passProps} />
             </Route>
           )}
         </Switch>
