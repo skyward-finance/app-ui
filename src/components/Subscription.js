@@ -283,7 +283,7 @@ export default function Subscription(props) {
           {
             sale_id: sale.saleId,
           },
-          TGas.mul(15).toFixed(0),
+          TGas.mul(30).toFixed(0),
           1
         ),
       ]);
@@ -299,7 +299,7 @@ export default function Subscription(props) {
             sale_id: sale.saleId,
             amount: amount.toFixed(0),
           },
-          TGas.mul(15).toFixed(0),
+          TGas.mul(30).toFixed(0),
           1
         ),
       ]);
@@ -359,7 +359,7 @@ export default function Subscription(props) {
       {
         sale_id: sale.saleId,
       },
-      TGas.mul(20).toFixed(0)
+      TGas.mul(30).toFixed(0)
     );
     const actions = [];
     const outTokens = sale.outTokens.map((o) => o.tokenAccountId);
