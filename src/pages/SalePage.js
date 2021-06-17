@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useSales } from "../data/sales";
-import uuid from "react-uuid";
 import { useParams } from "react-router";
 import Sale from "../components/Sale";
 import { useLocation, useHistory } from "react-router-dom";
@@ -11,11 +10,9 @@ import { useAccount } from "../data/account";
 function SalePage(props) {
   let { saleId } = useParams();
 
-  const [gkey] = useState(uuid());
   const sales = useSales();
 
   saleId = parseInt(saleId);
-  const key = `${gkey}-${saleId}`;
   const sale = sales.sales[saleId];
 
   const currentReferralId = getCurrentReferralId(saleId);
@@ -53,7 +50,7 @@ function SalePage(props) {
             "Loading"
           ) : sale ? (
             <div>
-              <Sale key={key} sale={sale} />
+              <Sale sale={sale} />
             </div>
           ) : (
             "Sale not found"

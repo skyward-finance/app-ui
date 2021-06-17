@@ -6,7 +6,7 @@ import { bigToString, fromTokenBalance } from "../data/utils";
 import { useToken } from "../data/token";
 
 export default function Rate(props) {
-  const [inv, setInv] = useState(false);
+  const [inv, setInv] = useState(true);
   const sale = props.sale || {};
   const outTokens = sale.outTokens || props.outTokens;
   const out = outTokens[0];

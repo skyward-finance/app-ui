@@ -46,6 +46,15 @@ async function _initNear() {
   );
   const _near = {};
 
+  _near.nearArchivalConnection = nearAPI.Connection.fromConfig({
+    networkId: NearConfig.networkId,
+    provider: {
+      type: "JsonRpcProvider",
+      args: { url: NearConfig.archivalNodeUrl },
+    },
+    signer: { type: "InMemorySigner", keyStore },
+  });
+
   _near.keyStore = keyStore;
   _near.nearConnection = nearConnection;
 
@@ -98,6 +107,13 @@ async function _initNear() {
     return nearAPI.utils.serialize.base_decode(block.header.hash);
   };
 
+  _near.fetchBlockHeight = async () => {
+    const block = await nearConnection.connection.provider.block({
+      finality: "final",
+    });
+    return block.header.height;
+  };
+
   _near.fetchNextNonce = async () => {
     const accessKeys = await _near.account.getAccessKeys();
     return accessKeys.reduce(
@@ -136,6 +152,23 @@ async function _initNear() {
       actions.push(action);
     });
     return await _near.walletConnection.requestSignTransactions(transactions);
+  };
+
+  _near.archivalViewCall = async (blockId, contractId, methodName, args) => {
+    args = args || {};
+    const result = await _near.nearArchivalConnection.provider.query({
+      request_type: "call_function",
+      account_id: contractId,
+      method_name: methodName,
+      args_base64: Buffer.from(JSON.stringify(args)).toString("base64"),
+      block_id: blockId,
+    });
+
+    return (
+      result.result &&
+      result.result.length > 0 &&
+      JSON.parse(Buffer.from(result.result).toString())
+    );
   };
 
   return _near;
