@@ -9,6 +9,12 @@ import { useToken } from "../data/token";
 import { fromTokenBalance } from "../data/utils";
 import ls from "local-storage";
 
+const UnknownHistorySize = 24 * 4;
+const MaxHistorySize = 24 * 14;
+const MaxNumberToDisplay = 48;
+const BlockInterval = 3600;
+const truncBlockHeight = (h) => Math.trunc(h / BlockInterval) * BlockInterval;
+
 const fetchHistoricSale = async (near, saleId, blockId) => {
   const lsKey = `${LsKey}hs:${saleId}:${blockId}`;
   let sale = ls.get(lsKey);
@@ -31,26 +37,45 @@ const fetchHistoricSale = async (near, saleId, blockId) => {
 
 export default function PriceHistory(props) {
   const sale = props.sale;
-  const saleId = sale.saleId;
 
   const [historicSales, setHistoricSales] = useState(false);
 
   const account = useAccount();
   useEffect(() => {
     if (historicSales === false && account && account.near) {
+      setHistoricSales([]);
       const fetchHistoricData = async () => {
         const near = account.near;
-        const currentHeight = await near.fetchBlockHeight();
-        const promises = [];
-        for (let i = 0; i < 20; ++i) {
-          const height = Math.trunc((currentHeight - 3600 * i) / 3600) * 3600;
-          promises.push(fetchHistoricSale(near, saleId, height));
+        const currentHeight = sale.endBlockHeight || sale.currentBlockHeight;
+        const firstBlockHeight = Math.max(
+          currentHeight - BlockInterval * MaxHistorySize,
+          sale.startBlockHeight ||
+            currentHeight - BlockInterval * UnknownHistorySize
+        );
+        let height = truncBlockHeight(currentHeight);
+        const step =
+          BlockInterval *
+          Math.max(
+            1,
+            Math.trunc(
+              Math.trunc((height - firstBlockHeight) / BlockInterval) /
+                MaxNumberToDisplay
+            )
+          );
+        const sales = [];
+        while (height > firstBlockHeight) {
+          const promises = [];
+          for (let i = 0; i < 10 && height > firstBlockHeight; ++i) {
+            promises.push(fetchHistoricSale(near, sale.saleId, height));
+            height -= step;
+          }
+          sales.push(...(await Promise.all(promises)));
+          setHistoricSales(sales);
         }
-        return await Promise.all(promises);
       };
-      fetchHistoricData().then(setHistoricSales);
+      fetchHistoricData();
     }
-  }, [historicSales, account, saleId]);
+  }, [historicSales, account, sale]);
 
   const inToken = useToken(sale.inTokenAccountId);
   const outToken = useToken(sale.outTokens[0].tokenAccountId);
@@ -92,6 +117,14 @@ export default function PriceHistory(props) {
       scales: {
         xAxis: {
           type: "time",
+          time: {
+            minUnit: "hour",
+          },
+          ticks: {
+            major: {
+              enabled: true,
+            },
+          },
         },
         yAxis: {
           ticks: {

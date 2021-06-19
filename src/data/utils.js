@@ -62,14 +62,22 @@ export const bigToString = (b, p, len) => {
     return "???";
   }
   let s = b.toFixed();
-  const pos = s.indexOf(".");
+  let pos = s.indexOf(".");
   p = p || 6;
   len = len || 7;
   if (pos > 0) {
-    p = Math.min(p, Math.max(len - pos, 1));
-    if (pos + p + 1 < s.length) {
-      s = s.substring(0, pos + p + 1);
+    p = Math.min(p, Math.max(len - pos, 0));
+    if (p > 0) {
+      p += 1;
     }
+    if (pos + p < s.length) {
+      s = s.substring(0, pos + p);
+    }
+  } else {
+    pos = s.length;
+  }
+  for (let i = pos - 4; i >= 0; i -= 3) {
+    s = s.slice(0, i + 1) + "," + s.slice(i + 1);
   }
 
   return s;
