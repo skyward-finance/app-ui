@@ -90,13 +90,15 @@ export default function PriceHistory(props) {
         return;
       }
       const x = sale.currentDate;
-      labels.push(x);
 
       const inAmount = fromTokenBalance(inToken, sale.inTokenRemaining);
       const outAmount = fromTokenBalance(outToken, sale.outTokens[0].remaining);
       const price = outAmount.gt(0) ? inAmount.div(outAmount) : null;
 
-      data.push(price.toNumber());
+      if (price) {
+        labels.push(x);
+        data.push(price.toNumber());
+      }
     });
     lineData = {
       labels,
