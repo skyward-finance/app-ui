@@ -15,19 +15,24 @@ const MaxNumberToDisplay = 48;
 const BlockInterval = 3600;
 const truncBlockHeight = (h) => Math.trunc(h / BlockInterval) * BlockInterval;
 
-const fetchHistoricSale = async (near, saleId, blockId) => {
+const getCachedHistoricSale = (saleId, blockId) => {
   const lsKey = `${LsKey}hs:${saleId}:${blockId}`;
   let sale = ls.get(lsKey);
-  if (sale) {
-    return mapSale(sale);
+  if (sale !== null) {
+    return sale ? mapSale(sale) : null;
   }
-  sale = await near
+  return false;
+};
+
+const fetchHistoricSale = async (near, saleId, blockId) => {
+  const lsKey = `${LsKey}hs:${saleId}:${blockId}`;
+  let sale = await near
     .archivalViewCall(blockId, NearConfig.contractName, "get_sale", {
       sale_id: saleId,
     })
     .catch((e) => false);
   if (sale !== false) {
-    ls.set(lsKey, sale);
+    ls.set(lsKey, sale || false);
     if (sale) {
       sale = mapSale(sale);
     }
@@ -63,12 +68,25 @@ export default function PriceHistory(props) {
             )
           );
         const sales = [];
+        let promises = [];
+        let needFetching = 0;
         while (height > firstBlockHeight) {
-          const promises = [];
-          for (let i = 0; i < 10 && height > firstBlockHeight; ++i) {
+          const cachedSale = getCachedHistoricSale(sale.saleId, height);
+          if (cachedSale === false) {
             promises.push(fetchHistoricSale(near, sale.saleId, height));
-            height -= step;
+            ++needFetching;
+          } else {
+            promises.push(Promise.resolve(cachedSale));
           }
+          height -= step;
+          if (needFetching === 10) {
+            sales.push(...(await Promise.all(promises)));
+            needFetching = 0;
+            promises = [];
+            setHistoricSales(sales);
+          }
+        }
+        if (promises.length > 0) {
           sales.push(...(await Promise.all(promises)));
           setHistoricSales(sales);
         }
@@ -89,7 +107,7 @@ export default function PriceHistory(props) {
       if (!sale) {
         return;
       }
-      const x = sale.currentDate;
+      const x = Math.min(sale.endDate, sale.currentDate);
 
       const inAmount = fromTokenBalance(inToken, sale.inTokenRemaining);
       const outAmount = fromTokenBalance(outToken, sale.outTokens[0].remaining);

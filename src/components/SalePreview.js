@@ -4,7 +4,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import RemainingDuration from "./RemainingDuration";
 import SaleInputOutputs from "./SaleInputOutputs";
-import Rate from "./Rate";
+import SaleRate from "../SaleRate";
 
 export default function SalePreview(props) {
   const sale = props.sale;
@@ -16,7 +16,7 @@ export default function SalePreview(props) {
         </Link>
         <hr />
         <SaleInputOutputs sale={sale} />
-        <Rate sale={sale} />
+        <SaleRate sale={sale} />
         <hr />
         <RemainingDuration sale={sale} />
         <div className="d-grid gap-2">

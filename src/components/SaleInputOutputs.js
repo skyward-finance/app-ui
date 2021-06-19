@@ -6,8 +6,11 @@ import uuid from "react-uuid";
 export default function SaleInputOutputs(props) {
   const [gkey] = useState(uuid());
   const sale = props.sale || {};
+  const saleEnded = props.sale && props.sale.ended();
 
-  const inputBalances = props.detailed
+  const inputBalances = saleEnded
+    ? [["", sale.inTokenPaid || props.inTokenPaid]]
+    : props.detailed
     ? [
         ["PAID: ", sale.inTokenPaid || props.inTokenPaid],
         ["REMAINING: ", sale.inTokenRemaining || props.inTokenRemaining],
@@ -15,7 +18,9 @@ export default function SaleInputOutputs(props) {
     : [["", sale.inTokenRemaining || props.inTokenRemaining]];
 
   const outputBalances = (o) =>
-    props.detailed
+    saleEnded
+      ? [["", o.distributed]]
+      : props.detailed
       ? [
           [o.distributedLabel || "DISTRIBUTED: ", o.distributed],
           [o.remainingLabel || "REMAINING: ", o.remaining],

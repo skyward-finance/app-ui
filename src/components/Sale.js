@@ -3,10 +3,10 @@ import "./SalePreview.scss";
 import React from "react";
 import RemainingDuration from "./RemainingDuration";
 import SaleInputOutputs from "./SaleInputOutputs";
-import Rate from "./Rate";
 import Subscription from "./Subscription";
 import ReferralLink from "./ReferralLink";
 import PriceHistory from "./PriceHistory";
+import SaleRate from "../SaleRate";
 
 export default function Sale(props) {
   const sale = props.sale;
@@ -20,7 +20,7 @@ export default function Sale(props) {
           </h2>
           <hr />
           <SaleInputOutputs sale={sale} detailed />
-          <Rate title="Current Rate" sale={sale} />
+          <SaleRate sale={sale} />
           <hr />
           <RemainingDuration sale={sale} />
         </div>
