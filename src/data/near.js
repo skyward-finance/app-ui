@@ -14,7 +14,8 @@ export const randomPublicKey = nearAPI.utils.PublicKey.from(
 
 export const noInternetMode = window.location.hostname === "localhost";
 
-export const IsMainnet = window.location.hostname === "berry.cards";
+export const IsMainnet =
+  false && !!window.location.hostname.match(/app\d?\.skyward\.finance/);
 const TestnetContract = "skyward.testnet";
 const TestNearConfig = {
   networkId: "testnet",
@@ -27,11 +28,14 @@ const TestNearConfig = {
   walletUrl: "https://wallet.testnet.near.org",
   storageCostPerByte: StorageCostPerByte,
 };
+const MainnetContract = "skyward.near";
 export const MainNearConfig = {
   networkId: "mainnet",
   nodeUrl: "https://rpc.mainnet.near.org",
   archivalNodeUrl: "https://rpc.mainnet.internal.near.org",
-  contractName: "cards.berryclub.ek.near",
+  contractName: MainnetContract,
+  wrapNearAccountId: `wrap.near`,
+  skywardTokenAccountId: `token.${MainnetContract}`,
   walletUrl: "https://wallet.near.org",
   storageCostPerByte: StorageCostPerByte,
 };

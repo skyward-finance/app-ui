@@ -55,6 +55,7 @@ export default function Subscription(props) {
     remainingInBalance: Big(0),
     unclaimedOutBalances: sale.outTokens.map(() => Big(0)),
     shares: Big(0),
+    noSub: true,
   };
 
   let availableInToken = Big(0);
@@ -413,171 +414,176 @@ export default function Subscription(props) {
   };
 
   return account && account.accountId ? (
-    <div className={"card m-2"}>
-      <div className="card-body">
-        <SaleInputOutputs
-          inputLabel="You Deposited"
-          inTokenAccountId={sale.inTokenAccountId}
-          inTokenRemaining={subInToken}
-          inTokenPaid={subscription.spentInBalance}
-          outputLabel="You Receiving"
-          outTokens={subOutTokens}
-          detailed
-        />
-        {!sale.ended() && (
-          <Rate
-            title="Expected Rate"
+    (!sale.ended() || !subscription.noSub) && (
+      <div className={"card m-2"}>
+        <div className="card-body">
+          <SaleInputOutputs
+            inputLabel="You Deposited"
             inTokenAccountId={sale.inTokenAccountId}
             inTokenRemaining={subInToken}
-            outputLabel="Expecting to Receive"
+            inTokenPaid={subscription.spentInBalance}
+            outputLabel="You Receiving"
             outTokens={subOutTokens}
+            detailed
           />
-        )}
-        <hr />
-        {!mode ? (
-          <div className="flex-buttons">
-            {!sale.ended() && (
-              <button
-                className="btn btn-primary m-1"
-                disabled={loading}
-                onClick={() => setMode(DepositMode)}
-              >
-                Deposit <TokenSymbol tokenAccountId={sale.inTokenAccountId} />
-              </button>
-            )}
-            {!sale.ended() && (
-              <button
-                className="btn btn-primary m-1"
-                disabled={loading}
-                onClick={() => setMode(WithdrawMode)}
-              >
-                Withdraw <TokenSymbol tokenAccountId={sale.inTokenAccountId} />
-              </button>
-            )}
-            <button
-              className="btn btn-success m-1"
-              disabled={loading || claimBalance.eq(0)}
-              onClick={(e) => claimOut(e)}
-            >
-              {loading && Loading}
-              Claim{" "}
-              <TokenBalance
-                tokenAccountId={sale.outTokens[0].tokenAccountId}
-                balance={claimBalance}
-              />{" "}
-              <TokenSymbol tokenAccountId={sale.outTokens[0].tokenAccountId} />
-            </button>
-          </div>
-        ) : mode === DepositMode ? (
-          <div>
-            <h5>
-              Deposit{" "}
-              <TokenSymbol
-                tokenAccountId={sale.inTokenAccountId}
-                className="font-monospace"
-              />{" "}
-              to receive{" "}
-              <TokenSymbol
-                tokenAccountId={sale.outTokens[0].tokenAccountId}
-                balance={subscription.unclaimedOutBalances[0]}
-                className="font-monospace"
-              />
-            </h5>
-            <AvailableInput
-              value={extraDeposit}
-              setValue={(v) => setExtraDeposit(v)}
-              limit={availableInTokenHuman}
+          {!sale.ended() && (
+            <Rate
+              title="Expected Rate"
+              inTokenAccountId={sale.inTokenAccountId}
+              inTokenRemaining={subInToken}
+              outputLabel="Expecting to Receive"
+              outTokens={subOutTokens}
             />
-            <div className="clearfix">
+          )}
+          <hr />
+          {!mode ? (
+            <div className="flex-buttons">
+              {!sale.ended() && (
+                <button
+                  className="btn btn-primary m-1"
+                  disabled={loading}
+                  onClick={() => setMode(DepositMode)}
+                >
+                  Deposit <TokenSymbol tokenAccountId={sale.inTokenAccountId} />
+                </button>
+              )}
+              {!sale.ended() && (
+                <button
+                  className="btn btn-primary m-1"
+                  disabled={loading}
+                  onClick={() => setMode(WithdrawMode)}
+                >
+                  Withdraw{" "}
+                  <TokenSymbol tokenAccountId={sale.inTokenAccountId} />
+                </button>
+              )}
               <button
-                className="btn btn-success"
-                disabled={
-                  !extraDeposit ||
-                  extraDeposit.gt(availableInTokenHuman) ||
-                  loading
-                }
-                type="button"
-                onClick={(e) => subscribeToSale(e)}
+                className="btn btn-success m-1"
+                disabled={loading || claimBalance.eq(0)}
+                onClick={(e) => claimOut(e)}
               >
                 {loading && Loading}
-                Deposit {extraDeposit && bigToString(extraDeposit)}{" "}
-                <TokenSymbol tokenAccountId={sale.inTokenAccountId} />
-              </button>
-              <button
-                className="btn btn-secondary float-end"
-                type="button"
-                onClick={() => {
-                  setExtraDeposit(null);
-                  setMode(null);
-                }}
-              >
-                Cancel
+                Claim{" "}
+                <TokenBalance
+                  tokenAccountId={sale.outTokens[0].tokenAccountId}
+                  balance={claimBalance}
+                />{" "}
+                <TokenSymbol
+                  tokenAccountId={sale.outTokens[0].tokenAccountId}
+                />
               </button>
             </div>
-          </div>
-        ) : mode === WithdrawMode ? (
-          <div>
-            <h5>
-              Withdraw{" "}
-              <TokenSymbol
-                tokenAccountId={sale.inTokenAccountId}
-                className="font-monospace"
-              />{" "}
-              from sale
-            </h5>
-            <AvailableInput
-              value={withdrawAmount}
-              setValue={(v) => setWithdrawAmount(v)}
-              limit={subRemainingInBalanceHuman}
-            />
-            <div className="form-check">
-              <input
-                className="form-check-input"
-                type="checkbox"
-                id="withdrawToWallet"
-                checked={withdrawToWallet}
-                onChange={(e) => {
-                  ls.set(withdrawToWalletLsKey, e.target.checked);
-                  setWithdrawToWallet(e.target.checked);
-                }}
+          ) : mode === DepositMode ? (
+            <div>
+              <h5>
+                Deposit{" "}
+                <TokenSymbol
+                  tokenAccountId={sale.inTokenAccountId}
+                  className="font-monospace"
+                />{" "}
+                to receive{" "}
+                <TokenSymbol
+                  tokenAccountId={sale.outTokens[0].tokenAccountId}
+                  balance={subscription.unclaimedOutBalances[0]}
+                  className="font-monospace"
+                />
+              </h5>
+              <AvailableInput
+                value={extraDeposit}
+                setValue={(v) => setExtraDeposit(v)}
+                limit={availableInTokenHuman}
               />
-              <label className="form-check-label" htmlFor="withdrawToWallet">
-                Withdraw to Wallet
-              </label>
+              <div className="clearfix">
+                <button
+                  className="btn btn-success"
+                  disabled={
+                    !extraDeposit ||
+                    extraDeposit.gt(availableInTokenHuman) ||
+                    loading
+                  }
+                  type="button"
+                  onClick={(e) => subscribeToSale(e)}
+                >
+                  {loading && Loading}
+                  Deposit {extraDeposit && bigToString(extraDeposit)}{" "}
+                  <TokenSymbol tokenAccountId={sale.inTokenAccountId} />
+                </button>
+                <button
+                  className="btn btn-secondary float-end"
+                  type="button"
+                  onClick={() => {
+                    setExtraDeposit(null);
+                    setMode(null);
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
+          ) : mode === WithdrawMode ? (
+            <div>
+              <h5>
+                Withdraw{" "}
+                <TokenSymbol
+                  tokenAccountId={sale.inTokenAccountId}
+                  className="font-monospace"
+                />{" "}
+                from sale
+              </h5>
+              <AvailableInput
+                value={withdrawAmount}
+                setValue={(v) => setWithdrawAmount(v)}
+                limit={subRemainingInBalanceHuman}
+              />
+              <div className="form-check">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  id="withdrawToWallet"
+                  checked={withdrawToWallet}
+                  onChange={(e) => {
+                    ls.set(withdrawToWalletLsKey, e.target.checked);
+                    setWithdrawToWallet(e.target.checked);
+                  }}
+                />
+                <label className="form-check-label" htmlFor="withdrawToWallet">
+                  Withdraw to Wallet
+                </label>
+              </div>
 
-            <div className="clearfix">
-              <button
-                className="btn btn-warning m-1"
-                disabled={
-                  !withdrawAmount ||
-                  withdrawAmount.gt(subRemainingInBalanceHuman) ||
-                  loading
-                }
-                type="button"
-                onClick={(e) => withdrawFromSale(e)}
-              >
-                {loading && Loading}
-                Withdraw {withdrawAmount && bigToString(withdrawAmount)}{" "}
-                <TokenSymbol tokenAccountId={sale.inTokenAccountId} />
-              </button>
-              <button
-                className="btn btn-secondary float-end"
-                type="button"
-                onClick={() => {
-                  setWithdrawAmount(null);
-                  setMode(null);
-                }}
-              >
-                Cancel
-              </button>
+              <div className="clearfix">
+                <button
+                  className="btn btn-warning m-1"
+                  disabled={
+                    !withdrawAmount ||
+                    withdrawAmount.gt(subRemainingInBalanceHuman) ||
+                    loading
+                  }
+                  type="button"
+                  onClick={(e) => withdrawFromSale(e)}
+                >
+                  {loading && Loading}
+                  Withdraw {withdrawAmount && bigToString(withdrawAmount)}{" "}
+                  <TokenSymbol tokenAccountId={sale.inTokenAccountId} />
+                </button>
+                <button
+                  className="btn btn-secondary float-end"
+                  type="button"
+                  onClick={() => {
+                    setWithdrawAmount(null);
+                    setMode(null);
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
-          </div>
-        ) : (
-          ""
-        )}
+          ) : (
+            ""
+          )}
+        </div>
       </div>
-    </div>
+    )
   ) : (
     <div className="alert alert-warning">Sign in to subscribe to this sale</div>
   );

@@ -92,6 +92,9 @@ function App(props) {
     </div>
   );
 
+  const claimEnabled =
+    signedIn && !IsMainnet && new Date() < new Date("2021-06-22");
+
   return (
     <div className="App">
       <Router basename={process.env.PUBLIC_URL}>
@@ -160,7 +163,7 @@ function App(props) {
                     </Link>
                   </li>
                 )}
-                {signedIn && !IsMainnet && (
+                {claimEnabled && (
                   <li className="nav-item">
                     <Link
                       className="nav-link"
@@ -178,9 +181,8 @@ function App(props) {
         </nav>
         {!IsMainnet && (
           <div className="alert alert-warning text-center">
-            This is a testnet version of the Skyward Finance app. The mainnet
-            app and the mainnet $SKYWARD token are not live. There is no ERC-20
-            token.
+            This is a testnet version of the Skyward Finance app. There is no
+            ERC-20 token.
           </div>
         )}
 
@@ -204,7 +206,7 @@ function App(props) {
               <CreateSalePage {...passProps} />
             </Route>
           )}
-          {signedIn && !IsMainnet && (
+          {claimEnabled && (
             <Route exact path={"/claim_mainnet/"}>
               <LinkMainnetPage {...passProps} />
             </Route>

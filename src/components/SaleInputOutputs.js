@@ -29,7 +29,9 @@ export default function SaleInputOutputs(props) {
 
   return (
     <div>
-      <label className="text-muted">{props.inputLabel || "Total Paying"}</label>
+      <label className="text-muted">
+        {props.inputLabel || (sale.ended() ? "Total Paid" : "Total Paying")}
+      </label>
       <TokenAndBalance
         className="sale-token-input"
         tokenAccountId={sale.inTokenAccountId || props.inTokenAccountId}
@@ -40,7 +42,8 @@ export default function SaleInputOutputs(props) {
           className="text-muted"
           style={{ position: "absolute", left: 0, bottom: 0 }}
         >
-          {props.outputLabel || "Total Receiving"}
+          {props.outputLabel ||
+            (sale.ended() ? "Total Received" : "Total Receiving")}
         </label>
         <i className="bi bi-arrow-down fs-3" />
       </div>
