@@ -23,9 +23,10 @@ const TestNearConfig = {
   nodeUrl: "https://rpc.testnet.near.org",
   archivalNodeUrl: "https://rpc.testnet.internal.near.org",
   contractName: TestnetContract,
-  lockupAccountIds: [...Array(5).keys()].map(
-    (i) => `lockup${i}.${TestnetContract}`
-  ),
+  lockupAccountIds: [],
+  // [...Array(5).keys()].map(
+  //   (i) => `lockup${i}.${TestnetContract}`
+  // ),
   wrapNearAccountId: "wrap.testnet",
   skywardTokenAccountId: `token.${TestnetContract}`,
   tokenSwapAccountId: "token-swap.skyward.testnet",
