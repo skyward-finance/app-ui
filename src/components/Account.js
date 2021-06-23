@@ -3,8 +3,9 @@ import { useAccount } from "../data/account";
 import uuid from "react-uuid";
 import AccountBalance from "./AccountBalance";
 import { Loading } from "../data/utils";
+import LockupAccount from "./LockupAccount";
 
-function Account(props) {
+export default function Account(props) {
   const [gkey] = useState(uuid());
   const account = useAccount();
 
@@ -19,22 +20,31 @@ function Account(props) {
       : [];
 
   return (
-    <div className="card">
-      {account.loading ? (
-        <div className="card-body">{Loading} loading...</div>
-      ) : (
-        <div className="card-body">
-          <h2 className="primary-header">Account {account.accountId}</h2>
-          <hr />
-          <div>Balances</div>
-          <div>{balances}</div>
-          {/*<div>*/}
-          {/*  <AccountRegisterToken />*/}
-          {/*</div>*/}
+    <div>
+      {account.lockupAccount && (
+        <div className="card mb-3">
+          <div className="card-body">
+            <h2 className="primary-header">$SKYWARD Lockup</h2>
+            <LockupAccount account={account} />
+          </div>
         </div>
       )}
+      <div className="card">
+        {account.loading ? (
+          <div className="card-body">{Loading} loading...</div>
+        ) : (
+          <div className="card-body">
+            <h2 className="primary-header">Account {account.accountId}</h2>
+            <hr />
+
+            <div>Balances</div>
+            <div>{balances}</div>
+            {/*<div>*/}
+            {/*  <AccountRegisterToken />*/}
+            {/*</div>*/}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
-
-export default Account;

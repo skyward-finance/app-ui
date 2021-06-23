@@ -92,7 +92,7 @@ export const useSales = singletonHook(defaultSales, () => {
               await refreshSale(sale.saleId);
             }
           },
-          sale.started() ? 1000 : 10000
+          sale.started() ? 1000 : 30000
         );
       }
     };

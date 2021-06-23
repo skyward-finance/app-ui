@@ -147,6 +147,7 @@ export default function PriceHistory(props) {
           },
         },
         yAxis: {
+          min: 0,
           ticks: {
             beginAtZero: true,
           },
@@ -156,12 +157,15 @@ export default function PriceHistory(props) {
   }
 
   return (
-    <div className="card m-2">
-      <div className="card-body">
-        Price history
-        <br />
-        <Line data={lineData} options={options} />
+    lineData &&
+    lineData.labels.length > 1 && (
+      <div className="card m-2">
+        <div className="card-body">
+          Price history
+          <br />
+          <Line data={lineData} options={options} />
+        </div>
       </div>
-    </div>
+    )
   );
 }

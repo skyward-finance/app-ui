@@ -360,7 +360,7 @@ export default function Subscription(props) {
       {
         sale_id: sale.saleId,
       },
-      TGas.mul(30).toFixed(0)
+      TGas.mul(60).toFixed(0)
     );
     const actions = [];
     const outTokens = sale.outTokens.map((o) => o.tokenAccountId);

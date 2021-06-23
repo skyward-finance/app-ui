@@ -4,7 +4,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import RemainingDuration from "./RemainingDuration";
 import SaleInputOutputs from "./SaleInputOutputs";
-import SaleRate from "../SaleRate";
+import SaleRate from "./SaleRate";
 
 export default function SalePreview(props) {
   const sale = props.sale;

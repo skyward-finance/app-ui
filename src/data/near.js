@@ -14,15 +14,19 @@ export const randomPublicKey = nearAPI.utils.PublicKey.from(
 
 export const noInternetMode = window.location.hostname === "localhost";
 
-export const IsMainnet =
-  false && !!window.location.hostname.match(/app\d?\.skyward\.finance/);
+export const IsMainnet = !!window.location.hostname.match(
+  /app\d?\.skyward\.finance/
+);
 const TestnetContract = "skyward.testnet";
 const TestNearConfig = {
   networkId: "testnet",
   nodeUrl: "https://rpc.testnet.near.org",
   archivalNodeUrl: "https://rpc.testnet.internal.near.org",
   contractName: TestnetContract,
-  wrapNearAccountId: `wrap.testnet`,
+  lockupAccountIds: [...Array(5).keys()].map(
+    (i) => `lockup${i}.${TestnetContract}`
+  ),
+  wrapNearAccountId: "wrap.testnet",
   skywardTokenAccountId: `token.${TestnetContract}`,
   tokenSwapAccountId: "token-swap.skyward.testnet",
   walletUrl: "https://wallet.testnet.near.org",
@@ -34,7 +38,10 @@ export const MainNearConfig = {
   nodeUrl: "https://rpc.mainnet.near.org",
   archivalNodeUrl: "https://rpc.mainnet.internal.near.org",
   contractName: MainnetContract,
-  wrapNearAccountId: `wrap.near`,
+  lockupAccountIds: [...Array(4).keys()].map(
+    (i) => `lockup${i}.${MainnetContract}`
+  ),
+  wrapNearAccountId: "wrap.near",
   skywardTokenAccountId: `token.${MainnetContract}`,
   walletUrl: "https://wallet.near.org",
   storageCostPerByte: StorageCostPerByte,

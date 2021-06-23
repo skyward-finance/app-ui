@@ -11,7 +11,6 @@ import { IsMainnet, NearConfig, useNear } from "./data/near";
 import SalePage from "./pages/SalePage";
 import TreasuryPage from "./pages/TreasuryPage";
 import CreateSalePage from "./pages/CreateSalePage";
-import LinkMainnetPage from "./pages/LinkMainnetPage";
 
 function App(props) {
   const [connected, setConnected] = useState(false);
@@ -92,9 +91,6 @@ function App(props) {
     </div>
   );
 
-  const claimEnabled =
-    signedIn && !IsMainnet && new Date() < new Date("2021-06-22");
-
   return (
     <div className="App">
       <Router basename={process.env.PUBLIC_URL}>
@@ -163,17 +159,6 @@ function App(props) {
                     </Link>
                   </li>
                 )}
-                {claimEnabled && (
-                  <li className="nav-item">
-                    <Link
-                      className="nav-link"
-                      aria-current="page"
-                      to={`/claim_mainnet/`}
-                    >
-                      Claim Mainnet $SKYWARD
-                    </Link>
-                  </li>
-                )}
               </ul>
               <form className="d-flex">{header}</form>
             </div>
@@ -204,11 +189,6 @@ function App(props) {
           {signedIn && (
             <Route exact path={"/create_sale/"}>
               <CreateSalePage {...passProps} />
-            </Route>
-          )}
-          {claimEnabled && (
-            <Route exact path={"/claim_mainnet/"}>
-              <LinkMainnetPage {...passProps} />
             </Route>
           )}
         </Switch>

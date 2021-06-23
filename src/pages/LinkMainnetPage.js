@@ -42,7 +42,6 @@ export default function LinkMainnetPage(props) {
   useEffect(() => {
     if (account && account.accountId) {
       mainnetNear.then((near) => {
-        console.log(account, near);
         if (near.accountId === account.accountId) {
           localStorage.removeItem(near.walletConnection._authDataKey);
           setMainnetSignedIn(false);
