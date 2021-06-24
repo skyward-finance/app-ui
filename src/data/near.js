@@ -5,7 +5,7 @@ import Big from "big.js";
 export const TGas = Big(10).pow(12);
 export const StorageCostPerByte = Big(10).pow(19);
 export const TokenStorageDeposit = StorageCostPerByte.mul(125);
-export const SkywardRegisterStorageDeposit = StorageCostPerByte.mul(1000);
+export const SkywardRegisterStorageDeposit = StorageCostPerByte.mul(1200);
 export const SubscribeDeposit = StorageCostPerByte.mul(1000);
 
 export const randomPublicKey = nearAPI.utils.PublicKey.from(
