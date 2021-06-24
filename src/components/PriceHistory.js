@@ -100,9 +100,17 @@ export default function PriceHistory(props) {
 
   let lineData = false;
   let options = false;
+  let numData = 0;
   if (historicSales && inToken && outToken) {
-    const labels = [];
-    const data = [];
+    const datasets = [
+      {
+        data: [],
+        label: `Before sale ${outToken.metadata.symbol} / ${inToken.metadata.symbol}`,
+        fill: false,
+        backgroundColor: "#bbbbbb",
+        borderColor: "#bbbbbb22",
+      },
+    ];
     [sale, ...historicSales].reverse().forEach((sale, i) => {
       if (!sale) {
         return;
@@ -114,21 +122,26 @@ export default function PriceHistory(props) {
       const price = outAmount.gt(0) ? inAmount.div(outAmount) : null;
 
       if (price) {
-        labels.push(x);
-        data.push(price.toNumber());
+        numData += 1;
+        if (sale.started()) {
+          if (datasets.length === 1) {
+            datasets.push({
+              data: [],
+              label: `${outToken.metadata.symbol} / ${inToken.metadata.symbol}`,
+              fill: false,
+              backgroundColor: "#8766ac",
+              borderColor: "#8766ac22",
+            });
+          }
+        }
+        datasets[sale.started() ? 1 : 0].data.push({
+          x,
+          y: price.toNumber(),
+        });
       }
     });
     lineData = {
-      labels,
-      datasets: [
-        {
-          label: `${outToken.metadata.symbol} / ${inToken.metadata.symbol}`,
-          data,
-          fill: false,
-          backgroundColor: "#8766ac",
-          borderColor: "#8766ac22",
-        },
-      ],
+      datasets,
     };
 
     options = {
@@ -158,11 +171,10 @@ export default function PriceHistory(props) {
 
   return (
     lineData &&
-    lineData.labels.length > 1 && (
+    numData > 1 && (
       <div className="card m-2">
         <div className="card-body">
-          Price history
-          <br />
+          <div>Rate history</div>
           <Line data={lineData} options={options} />
         </div>
       </div>

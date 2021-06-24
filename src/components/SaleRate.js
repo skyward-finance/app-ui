@@ -16,6 +16,9 @@ export default function SaleRate(props) {
       ]}
     />
   ) : (
-    <Rate title="Current Rate" sale={sale} />
+    <Rate
+      title={sale.started() ? "Current Rate" : "Expected Rate"}
+      sale={sale}
+    />
   );
 }

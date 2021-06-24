@@ -16,14 +16,17 @@ export default function LockupAccount(props) {
   const [loading, setLoading] = useState(false);
   const account = props.account;
   const lockupAccount = account.lockupAccount;
+  const time = new Date().getTime();
 
-  const progress = Math.trunc(
-    (lockupAccount.passedDuration() / lockupAccount.duration) * 100
-  );
+  const progress = lockupAccount.started()
+    ? (lockupAccount.passedDuration() / lockupAccount.duration) * 100
+    : ((lockupAccount.startTimestamp - time) /
+        (lockupAccount.endTimestamp - time)) *
+      100;
 
   const remainingDuration = lockupAccount.started()
     ? lockupAccount.duration - lockupAccount.passedDuration()
-    : lockupAccount.startDate - new Date().getTime();
+    : lockupAccount.startDate - time;
 
   const unclaimedBalance = lockupAccount.unclaimedBalance();
   const remainingBalance = lockupAccount.remainingBalance;
@@ -80,25 +83,59 @@ export default function LockupAccount(props) {
 
   return (
     <div>
-      <div className="clearfix">
-        <div className="float-start duration-date">
+      <div className="duration-date-wrapper">
+        <div
+          className="duration-date"
+          style={{
+            left: lockupAccount.started()
+              ? 0
+              : `min(100% - 12em, ${progress}%)`,
+          }}
+        >
           {dateToString(lockupAccount.startDate)}
         </div>
-        <div className="float-end duration-date">
+        <div className="duration-date" style={{ right: 0 }}>
           {dateToString(lockupAccount.endDate)}
         </div>
       </div>
       <div className="progress">
-        <div
-          className="progress-bar"
-          role="progressbar"
-          aria-valuenow={progress}
-          aria-valuemin={0}
-          aria-valuemax={100}
-          style={{ minWidth: `${progress}%` }}
-        >
-          {lockupAccount.started() && <div>{progress}%</div>}
-        </div>
+        {lockupAccount.started() ? (
+          <div
+            className="progress-bar bg-simple-gradient"
+            role="progressbar"
+            aria-valuenow={progress}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            style={{ minWidth: `${progress}%` }}
+          >
+            {lockupAccount.started() && (
+              <div>{Math.trunc(progress * 10) / 10}%</div>
+            )}
+          </div>
+        ) : (
+          <>
+            <div
+              className="progress-bar bg-transparent text-muted"
+              role="progressbar"
+              aria-valuenow={progress}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              style={{ width: `${progress}%` }}
+            >
+              Locked
+            </div>
+            <div
+              className="progress-bar bg-simple-gradient-light"
+              role="progressbar"
+              aria-valuenow={100 - progress}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              style={{ width: `${100 - progress}%` }}
+            >
+              Release 0%
+            </div>
+          </>
+        )}
       </div>
       <div className="text-center">
         {lockupAccount.ended() ? (

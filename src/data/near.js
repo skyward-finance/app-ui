@@ -17,6 +17,7 @@ export const noInternetMode = window.location.hostname === "localhost";
 export const IsMainnet = !!window.location.hostname.match(
   /app\d?\.skyward\.finance/
 );
+// const TestnetContract = "dev-1624326477618-30908433776884";
 const TestnetContract = "skyward.testnet";
 const TestNearConfig = {
   networkId: "testnet",

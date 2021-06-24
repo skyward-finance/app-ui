@@ -39,7 +39,8 @@ export const mapSale = (s) => {
   s.startTime = parseFloat(s.startTime) / 1e6;
   s.startDate = new Date(s.startTime);
   s.duration = parseFloat(s.duration) / 1e6;
-  s.endDate = new Date(s.startTime + s.duration);
+  s.endTime = s.startTime + s.duration;
+  s.endDate = new Date(s.endTime);
   s.remainingDuration = parseFloat(s.remainingDuration) / 1e6;
   if (s.currentTime) {
     s.currentTime = parseFloat(s.currentTime) / 1e6;

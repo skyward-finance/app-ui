@@ -5,9 +5,10 @@ import React from "react";
 
 export default function RemainingDuration(props) {
   const sale = props.sale;
+  const time = new Date().getTime();
   const progress = sale.started()
-    ? Math.trunc((1 - sale.remainingDuration / sale.duration) * 100)
-    : 0;
+    ? (1 - sale.remainingDuration / sale.duration) * 100
+    : ((sale.startTime - time) / (sale.endTime - time)) * 100;
 
   // const coolDown = Math.max(remainingDuration - refreshRate, 0) + ;
   //       callback: () =>
@@ -21,28 +22,58 @@ export default function RemainingDuration(props) {
 
   const remainingDuration = sale.started()
     ? sale.remainingDuration
-    : sale.startDate - new Date().getTime();
+    : sale.startDate - time;
   return (
     <div>
-      <div className="clearfix">
-        <div className="float-start duration-date">
+      <div className="duration-date-wrapper">
+        <div
+          className="duration-date"
+          style={{
+            left: sale.started() ? 0 : `min(100% - 12em, ${progress}%)`,
+          }}
+        >
           {dateToString(sale.startDate)}
         </div>
-        <div className="float-end duration-date">
+        <div className="duration-date" style={{ right: 0 }}>
           {dateToString(sale.endDate)}
         </div>
       </div>
       <div className="progress">
-        <div
-          className="progress-bar"
-          role="progressbar"
-          aria-valuenow={progress}
-          aria-valuemin={0}
-          aria-valuemax={100}
-          style={{ minWidth: `${progress}%` }}
-        >
-          {sale.started() && <div>{progress}%</div>}
-        </div>
+        {sale.started() ? (
+          <div
+            className="progress-bar bg-simple-gradient"
+            role="progressbar"
+            aria-valuenow={progress}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            style={{ minWidth: `${progress}%` }}
+          >
+            {sale.started() && <div>{Math.trunc(progress * 10) / 10}%</div>}
+          </div>
+        ) : (
+          <>
+            <div
+              className="progress-bar bg-transparent text-muted"
+              role="progressbar"
+              aria-valuenow={progress}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              style={{ width: `${progress}%` }}
+            >
+              Preparation
+            </div>
+            <div
+              className="progress-bar bg-simple-gradient-light"
+              role="progressbar"
+              aria-valuenow={100 - progress}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              style={{ width: `${100 - progress}%` }}
+            >
+              Sale 0%
+            </div>
+          </>
+        )}
       </div>
       <div className="text-center">
         {sale.ended() ? (
