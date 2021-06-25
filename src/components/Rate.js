@@ -27,7 +27,8 @@ export default function Rate(props) {
   const usdBalance =
     refFinance &&
     !refFinance.loading &&
-    inTokenAccountId === NearConfig.wrapNearAccountId
+    inTokenAccountId === NearConfig.wrapNearAccountId &&
+    inversePrice
       ? inversePrice.mul(refFinance.nearPrice)
       : false;
 
