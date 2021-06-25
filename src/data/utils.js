@@ -6,7 +6,8 @@ import ls from "local-storage";
 const MinAccountIdLen = 2;
 const MaxAccountIdLen = 64;
 const ValidAccountRe = /^(([a-z\d]+[-_])*[a-z\d]+\.)*([a-z\d]+[-_])*[a-z\d]+$/;
-const AccountSafetyMargin = Big(10).pow(24).div(2);
+export const OneNear = Big(10).pow(24);
+const AccountSafetyMargin = OneNear.div(2);
 
 export const Loading = (
   <span

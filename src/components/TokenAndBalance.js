@@ -17,6 +17,7 @@ export default function TokenAndBalance(props) {
             <TokenBalance
               tokenAccountId={props.tokenAccountId}
               balance={balance}
+              clickable
             />
           </div>
         ))}
