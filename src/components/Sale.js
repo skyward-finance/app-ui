@@ -26,7 +26,7 @@ export default function Sale(props) {
         </div>
       </div>
       <Subscription sale={sale} />
-      <PriceHistory sale={sale} />
+      {!sale.farAhead() && <PriceHistory sale={sale} />}
       <ReferralLink sale={sale} />
     </div>
   );

@@ -3,7 +3,7 @@ import React from "react";
 
 export default function SaleRate(props) {
   const sale = props.sale;
-  return sale.ended() ? (
+  return sale.farAhead() ? null : sale.ended() ? (
     <Rate
       title="Average Rate"
       inTokenAccountId={sale.inTokenAccountId}

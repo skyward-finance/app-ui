@@ -15,9 +15,11 @@ function SalesPage(props) {
   const currentSales = sortedSales.filter(
     (sale) => !sale.ended() && sale.started()
   );
-  const upcomingSales = sortedSales.filter(
+  const allUpcomingSales = sortedSales.filter(
     (sale) => !sale.ended() && !sale.started()
   );
+  const soonUpcomingSales = allUpcomingSales.filter((sale) => !sale.farAhead());
+  const upcomingSales = allUpcomingSales.filter((sale) => sale.farAhead());
   const endedSales = sortedSales.filter((sale) => sale.ended());
 
   const saleList = (sale) => {
@@ -27,6 +29,7 @@ function SalesPage(props) {
 
   const allSales = [
     ["Current sales", currentSales],
+    ["Sales starting within one week", soonUpcomingSales],
     ["Upcoming sales", upcomingSales],
     ["Ended sales", endedSales],
   ];

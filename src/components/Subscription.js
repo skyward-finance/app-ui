@@ -417,6 +417,17 @@ export default function Subscription(props) {
     (!sale.ended() || !subscription.noSub) && (
       <div className={"card m-2"}>
         <div className="card-body">
+          {sale.farAhead() && (
+            <div className="alert alert-warning">
+              <b>Warning! This sale will begin in more than one week!</b>
+              <br />
+              Don't deposit{" "}
+              <TokenSymbol tokenAccountId={sale.inTokenAccountId} /> now. There
+              will be enough time to deposit before the sale begins.
+              <br />
+            </div>
+          )}
+
           <SaleInputOutputs
             inputLabel="You Deposited"
             inTokenAccountId={sale.inTokenAccountId}
@@ -440,7 +451,9 @@ export default function Subscription(props) {
             <div className="flex-buttons">
               {!sale.ended() && (
                 <button
-                  className="btn btn-primary m-1"
+                  className={`btn ${
+                    !sale.farAhead() ? "btn-primary" : "btn-outline-primary"
+                  } m-1`}
                   disabled={loading}
                   onClick={() => setMode(DepositMode)}
                 >
@@ -449,8 +462,8 @@ export default function Subscription(props) {
               )}
               {!sale.ended() && (
                 <button
-                  className="btn btn-primary m-1"
-                  disabled={loading}
+                  className={`btn btn-outline-primary m-1`}
+                  disabled={loading || subscription.remainingInBalance.eq(0)}
                   onClick={() => setMode(WithdrawMode)}
                 >
                   Withdraw{" "}

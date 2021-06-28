@@ -10,6 +10,8 @@ const defaultSales = {
   sales: [],
 };
 
+const OneWeek = 7 * 24 * 60 * 60 * 1000;
+
 const mapSubscription = (s) => {
   return {
     claimedOutBalance: s.claimedOutBalance.map(Big),
@@ -54,6 +56,7 @@ export const mapSale = (s) => {
   }
   s.started = () => s.remainingDuration < s.duration;
   s.ended = () => s.remainingDuration === 0;
+  s.farAhead = () => !s.started() && s.startTime - s.currentTime > OneWeek;
   return s;
 };
 
