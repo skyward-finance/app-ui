@@ -95,10 +95,6 @@ export const useRefFinance = singletonHook(defaultRefFinance, () => {
         }
       });
 
-      console.log(
-        totalNearInUsdPools.toFixed(0),
-        totalUsdInUsdPools.toFixed(0)
-      );
       const nearPrice = totalNearInUsdPools.gt(0)
         ? totalUsdInUsdPools.div(totalNearInUsdPools)
         : Big(0);
