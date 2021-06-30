@@ -49,9 +49,7 @@ function SalePage(props) {
           {sales.loading ? (
             "Loading"
           ) : sale ? (
-            <div>
-              <Sale sale={sale} />
-            </div>
+            <Sale sale={sale} />
           ) : (
             "Sale not found"
           )}

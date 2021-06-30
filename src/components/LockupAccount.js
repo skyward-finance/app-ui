@@ -53,7 +53,9 @@ export default function LockupAccount(props) {
       ]);
     }
 
-    if (!(await skywardToken.contract.isRegistered(account.accountId))) {
+    if (
+      !(await skywardToken.contract.isRegistered(account, account.accountId))
+    ) {
       actions.push([
         NearConfig.skywardTokenAccountId,
         nearAPI.transactions.functionCall(

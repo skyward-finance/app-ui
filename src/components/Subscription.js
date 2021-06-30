@@ -72,7 +72,7 @@ export default function Subscription(props) {
         availableInToken = availableInToken.add(inBalance);
       } else {
         inToken.contract
-          .balanceOf(account.accountId)
+          .balanceOf(account, account.accountId)
           .then((v) => setInBalance(v));
       }
     }
@@ -183,7 +183,7 @@ export default function Subscription(props) {
     }
 
     if (sale.inTokenAccountId === NearConfig.wrapNearAccountId) {
-      if (!(await inToken.contract.isRegistered(account.accountId))) {
+      if (!(await inToken.contract.isRegistered(account, account.accountId))) {
         actions.push([
           sale.inTokenAccountId,
           nearAPI.transactions.functionCall(
@@ -212,7 +212,9 @@ export default function Subscription(props) {
       }
     }
 
-    if (!(await inToken.contract.isRegistered(NearConfig.contractName))) {
+    if (
+      !(await inToken.contract.isRegistered(account, NearConfig.contractName))
+    ) {
       actions.push([
         sale.inTokenAccountId,
         nearAPI.transactions.functionCall(
@@ -307,7 +309,7 @@ export default function Subscription(props) {
     }
 
     if (withdrawToWallet) {
-      if (!(await inToken.contract.isRegistered(account.accountId))) {
+      if (!(await inToken.contract.isRegistered(account, account.accountId))) {
         actions.push([
           sale.inTokenAccountId,
           nearAPI.transactions.functionCall(
@@ -415,7 +417,7 @@ export default function Subscription(props) {
 
   return account && account.accountId ? (
     (!sale.ended() || !subscription.noSub) && (
-      <div className={"card m-2"}>
+      <div className={"card mb-2"}>
         <div className="card-body">
           {sale.farAhead() && (
             <div className="alert alert-warning">

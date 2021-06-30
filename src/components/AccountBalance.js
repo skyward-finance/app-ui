@@ -30,7 +30,7 @@ export default function AccountBalance(props) {
         balances.push(["WALLET: ", tokenBalance]);
       } else {
         if (account.accountId && token && token.metadata) {
-          token.contract.balanceOf(account.accountId).then((b) => {
+          token.contract.balanceOf(account, account.accountId).then((b) => {
             setTokenBalance(b);
           });
         }
@@ -52,7 +52,7 @@ export default function AccountBalance(props) {
 
     const actions = [];
 
-    if (!(await token.contract.isRegistered(account.accountId))) {
+    if (!(await token.contract.isRegistered(account, account.accountId))) {
       actions.push([
         tokenAccountId,
         nearAPI.transactions.functionCall(
@@ -80,7 +80,10 @@ export default function AccountBalance(props) {
     ]);
 
     if (tokenAccountId === NearConfig.wrapNearAccountId) {
-      const tokenBalance = await token.contract.balanceOf(account.accountId);
+      const tokenBalance = await token.contract.balanceOf(
+        account,
+        account.accountId
+      );
       const internalBalance = account.balances[tokenAccountId];
       actions.push([
         NearConfig.wrapNearAccountId,

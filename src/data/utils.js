@@ -58,6 +58,13 @@ export const keysToCamel = function (o) {
   return o;
 };
 
+export const bigMin = (a, b) => {
+  if (a && b) {
+    return a.lt(b) ? a : b;
+  }
+  return a || b;
+};
+
 export const bigToString = (b, p, len) => {
   if (b === null) {
     return "???";

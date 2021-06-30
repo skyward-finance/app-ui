@@ -20,16 +20,16 @@ export default function Account(props) {
       : [];
 
   return (
-    <div>
+    <>
       {account.lockupAccount && (
-        <div className="card mb-3">
+        <div className="card mb-2">
           <div className="card-body">
             <h2 className="primary-header">$SKYWARD Lockup</h2>
             <LockupAccount account={account} />
           </div>
         </div>
       )}
-      <div className="card">
+      <div className="card mb-2">
         {account.loading ? (
           <div className="card-body">{Loading} loading...</div>
         ) : (
@@ -45,6 +45,6 @@ export default function Account(props) {
           </div>
         )}
       </div>
-    </div>
+    </>
   );
 }

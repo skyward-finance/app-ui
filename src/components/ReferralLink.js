@@ -16,7 +16,7 @@ export default function ReferralLink(props) {
     `/sale/${sale.saleId}?r=${account.accountId}`;
 
   return (
-    <div className={"card m-2"}>
+    <div className={"card mb-2"}>
       <div className="card-body">
         <div className="mb-3">
           <label htmlFor="ref-link" className="form-label">

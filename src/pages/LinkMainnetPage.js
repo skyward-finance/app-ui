@@ -126,7 +126,10 @@ export default function LinkMainnetPage(props) {
     e.preventDefault();
     setLoading(true);
 
-    const amount = await skywardToken.contract.balanceOf(account.accountId);
+    const amount = await skywardToken.contract.balanceOf(
+      account,
+      account.accountId
+    );
 
     const actions = [
       [
@@ -156,7 +159,7 @@ export default function LinkMainnetPage(props) {
   useEffect(() => {
     if (account && account.accountId && skywardToken) {
       skywardToken.contract
-        .balanceOf(account.accountId)
+        .balanceOf(account, account.accountId)
         .then(setSkywardBalance);
     }
   }, [account, skywardToken]);
@@ -165,7 +168,7 @@ export default function LinkMainnetPage(props) {
     <div>
       <div className="container">
         <div className="row mb-3">
-          <div className="card m-2">
+          <div className="card mb-2">
             <div className="card-body">
               <h2 className="primary-header">Claim Mainnet $SKYWARD</h2>
               <div>{mainnetSignInButton}</div>

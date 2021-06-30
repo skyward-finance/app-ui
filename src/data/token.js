@@ -47,17 +47,12 @@ export const getTokenFetcher = async (_key, tokenAccountId, account) => {
   const localToken = ls.get(lsKey);
   const time = new Date().getTime();
 
-  const contract = {
-    balanceOf: async (accountId) => {
-      /*
-      const balances = tokenBalances[tokenAccountId] || {};
-      tokenBalances[tokenAccountId] = balances;
-      if (!fresh && accountId in balances) {
-        return balances[accountId];
-      }
-      (balances[accountId] =
-       */
+  if (!account) {
+    return null;
+  }
 
+  const contract = {
+    balanceOf: async (account, accountId) => {
       return Big(
         await account.near.account.viewFunction(
           tokenAccountId,
@@ -68,7 +63,7 @@ export const getTokenFetcher = async (_key, tokenAccountId, account) => {
         )
       );
     },
-    isRegistered: async (accountId) =>
+    isRegistered: async (account, accountId) =>
       isTokenRegistered(account, tokenAccountId, accountId),
   };
 
@@ -77,9 +72,6 @@ export const getTokenFetcher = async (_key, tokenAccountId, account) => {
     token.totalSupply = Big(token.totalSupply);
 
     return (tokens[tokenAccountId] = hardcodedMetadata(token, tokenAccountId));
-  }
-  if (!account) {
-    return null;
   }
   let token = false;
   try {

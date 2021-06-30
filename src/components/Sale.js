@@ -12,8 +12,8 @@ export default function Sale(props) {
   const sale = props.sale;
 
   return (
-    <div>
-      <div className="card m-2">
+    <>
+      <div className="card mb-2">
         <div className="card-body">
           <h2 className="sale-title primary-header">
             {sale.title || "Noname sale"}
@@ -28,6 +28,6 @@ export default function Sale(props) {
       <Subscription sale={sale} />
       {!sale.farAhead() && <PriceHistory sale={sale} />}
       <ReferralLink sale={sale} />
-    </div>
+    </>
   );
 }

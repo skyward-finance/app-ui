@@ -9,8 +9,14 @@ export default function AvailableInput(props) {
   const limit = props.limit;
   const value = props.value;
   const setValue = props.setValue;
+
+  const [innerValue, setInnerValue] = useState(value);
+
   if (isMax && !limit.eq(value || Big(0))) {
-    setTimeout(() => setValue(limit), 1);
+    setTimeout(() => {
+      setInnerValue(limit);
+      setValue(limit);
+    }, 1);
   }
 
   return (
@@ -21,7 +27,7 @@ export default function AvailableInput(props) {
           type="number"
           input={inputId}
           placeholder={"1"}
-          value={value || ""}
+          value={innerValue || ""}
           onChange={(e) => {
             e.preventDefault();
             setIsMax(false);
@@ -32,10 +38,16 @@ export default function AvailableInput(props) {
                 v = Big(nv);
                 if (v.lt(0)) {
                   v = v.mul(-1);
+                  setInnerValue(v);
+                } else {
+                  setInnerValue(nv);
                 }
-              } catch (e) {}
+              } catch (e) {
+                setInnerValue(value);
+              }
             } else {
               v = null;
+              setInnerValue(nv);
             }
             setValue(v);
           }}

@@ -172,7 +172,7 @@ export default function PriceHistory(props) {
   return (
     lineData &&
     numData > 1 && (
-      <div className="card m-2">
+      <div className="card mb-2">
         <div className="card-body">
           <div>Rate history</div>
           <Line data={lineData} options={options} />
