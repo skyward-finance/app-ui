@@ -13,6 +13,7 @@ import {
   bigToString,
   fromTokenBalance,
   Loading,
+  OneSkyward,
   toTokenBalance,
 } from "../data/utils";
 import TokenSymbol from "./TokenSymbol";
@@ -89,7 +90,17 @@ function Account(props) {
                 ["YOU WILL RECEIVE ", youReceive],
                 ["TREASURY ", balance],
               ]
-            : [["", balance]];
+            : [
+                [
+                  "PER SKYWARD ",
+                  treasury.skywardCirculatingSupply.gt(0)
+                    ? balance
+                        .mul(OneSkyward)
+                        .div(treasury.skywardCirculatingSupply)
+                    : Big(0),
+                ],
+                ["TOTAL ", balance],
+              ];
           return (
             <TokenAndBalance
               key={key}
@@ -240,7 +251,7 @@ function Account(props) {
             />
           </div>
           <div>
-            {account && mode === DefaultMode ? (
+            {account && account.accountId && mode === DefaultMode ? (
               <button
                 className="btn btn-outline-primary m-1"
                 disabled={loading}
