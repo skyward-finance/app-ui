@@ -19,6 +19,7 @@
     "moment": "^2.29.1",
     "near-api-js": "^0.41.0",
     "node-sass": "^4.0.0",
+    "pg": "^8.6.0",
     "react": "^16.13.1",
     "react-chartjs-2": "^3.0.3",
     "react-compound-timer": "^1.2.0",
