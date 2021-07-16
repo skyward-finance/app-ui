@@ -23,12 +23,17 @@ const selectStyles = {
 export default function TokenSelect(props) {
   const account = useAccount();
 
+  const propsFilter = props.tokenFilter || (() => true);
+  const tokenFilter = (option) => propsFilter(option.value);
+
   const tokenOptions =
     account && !account.loading
-      ? Object.entries(account.balances).map(([tokenAccountId, _balance]) => ({
-          value: tokenAccountId,
-          label: <TokenBadge tokenAccountId={tokenAccountId} />,
-        }))
+      ? Object.entries(account.balances)
+          .map(([tokenAccountId, _balance]) => ({
+            value: tokenAccountId,
+            label: <TokenBadge tokenAccountId={tokenAccountId} />,
+          }))
+          .filter(tokenFilter)
       : [];
 
   const loadOptions = async (inputValue) => {
@@ -37,8 +42,8 @@ export default function TokenSelect(props) {
         value: inputValue,
         label: <TokenBadge tokenAccountId={inputValue} />,
       },
-      ...tokenOptions,
-    ];
+      ...tokenOptions.filter((option) => option.value !== inputValue),
+    ].filter(tokenFilter);
   };
 
   const handleInputChange = (value) => {

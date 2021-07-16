@@ -40,9 +40,17 @@ body, html {
 .btn-primary {
   color: #eee;
   background: $simple-gradient;
+
+  .text-secondary {
+    color: #bbb !important;
+  }
+
   &:hover, &:active, &:focus, &:disabled {
     background: $primary-gradient;
     color: #fff;
+    .text-secondary {
+      color: #ccc !important;
+    }
   }
 }
 

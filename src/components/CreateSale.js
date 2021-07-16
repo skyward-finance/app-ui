@@ -249,6 +249,7 @@ export default function CreatSale(props) {
             </label>
             <TokenSelect
               id="input-token-select"
+              tokenFilter={(tokenAccountId) => tokenAccountId !== outputTokenId}
               onSelectTokenId={setInTokenAccountId}
             />
           </div>
@@ -262,6 +263,9 @@ export default function CreatSale(props) {
               </label>
               <TokenSelect
                 id="output-token-select"
+                tokenFilter={(tokenAccountId) =>
+                  tokenAccountId !== inTokenAccountId
+                }
                 onSelectTokenId={setOutputTokenId}
               />
             </div>
