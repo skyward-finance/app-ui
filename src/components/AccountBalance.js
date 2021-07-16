@@ -8,31 +8,61 @@ import { NearConfig, TGas, TokenStorageDeposit } from "../data/near";
 import { availableNearBalance, Loading } from "../data/utils";
 import * as nearAPI from "near-api-js";
 import TokenBalance from "./TokenBalance";
+import Big from "big.js";
 
-export default function AccountBalance(props) {
+export const BalanceType = {
+  Internal: "Internal",
+  Wallet: "Wallet",
+  NEAR: "NEAR",
+};
+
+export function AccountBalance(props) {
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
+
   const tokenAccountId = props.tokenAccountId;
+  const [currentTokenAccountId, setTokenAccountAccountId] = useState(
+    tokenAccountId
+  );
   const account = useAccount();
 
   const token = useToken(tokenAccountId);
 
   const [balances, setBalances] = useState([]);
   const [tokenBalance, setTokenBalance] = useState(null);
+  if (currentTokenAccountId !== tokenAccountId) {
+    setTokenAccountAccountId(tokenAccountId);
+    setTokenBalance(null);
+  }
+
+  const [withdrawableBalance, setWithdrawableBalance] = useState(Big(0));
+
+  const onFetchedBalances = props.onFetchedBalances;
 
   useEffect(() => {
     const balances = [];
+    const fetchedBalances = {};
     if (account && !account.loading) {
+      let withdrawableBalance = Big(0);
       if (tokenAccountId in account.balances) {
-        balances.push(["BALANCE: ", account.balances[tokenAccountId]]);
+        balances.push(["INTERNAL: ", account.balances[tokenAccountId]]);
+        withdrawableBalance = account.balances[tokenAccountId];
+        fetchedBalances[BalanceType.Internal] =
+          account.balances[tokenAccountId];
       }
       if (tokenBalance !== null) {
-        balances.push(["WALLET: ", tokenBalance]);
+        if (tokenBalance) {
+          balances.push(["WALLET: ", tokenBalance]);
+          fetchedBalances[BalanceType.Wallet] = tokenBalance;
+        }
       } else {
         if (account.accountId && token && token.metadata) {
-          token.contract.balanceOf(account, account.accountId).then((b) => {
-            setTokenBalance(b);
-          });
+          token.contract
+            .balanceOf(account, account.accountId)
+            .then((b) => {
+              setTokenBalance(b);
+            })
+            .catch((e) => setTokenBalance(false));
         }
       }
       if (
@@ -41,10 +71,17 @@ export default function AccountBalance(props) {
       ) {
         let nativeNearBalance = availableNearBalance(account);
         balances.push(["NEAR: ", nativeNearBalance]);
+        fetchedBalances[BalanceType.NEAR] = nativeNearBalance;
       }
       setBalances([...balances]);
+      setWithdrawableBalance(withdrawableBalance);
+      if (onFetchedBalances) {
+        onFetchedBalances(fetchedBalances);
+      }
     }
-  }, [account, token, tokenAccountId, tokenBalance]);
+  }, [account, token, tokenAccountId, tokenBalance, onFetchedBalances]);
+
+  const clickable = props.clickable && withdrawableBalance.gt(0);
 
   const withdraw = async (e) => {
     e.preventDefault();
@@ -117,21 +154,24 @@ export default function AccountBalance(props) {
 
   return (
     <div>
-      <div className="account-balance" onClick={() => setExpanded(!expanded)}>
+      <div
+        className={`account-balance ${clickable ? "clickable" : ""}`}
+        onClick={() => clickable && setExpanded(!expanded)}
+      >
         <TokenAndBalance tokenAccountId={tokenAccountId} balances={balances} />
       </div>
       {expanded && (
         <div className="mb-2">
           <button
             className="btn btn-primary m-1"
-            disabled={balances.length === 0 || balances[0][1].eq(0) || loading}
+            disabled={withdrawableBalance.eq(0) || loading}
             onClick={(e) => withdraw(e)}
           >
             {loading && Loading}
             Withdraw{" "}
             <TokenBalance
               tokenAccountId={tokenAccountId}
-              balance={balances[0][1]}
+              balance={withdrawableBalance}
             />{" "}
             <TokenSymbol tokenAccountId={tokenAccountId} /> to wallet
           </button>

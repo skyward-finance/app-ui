@@ -6,6 +6,7 @@ import { bigToString, fromTokenBalance } from "../data/utils";
 import { useToken } from "../data/token";
 import { useRefFinance } from "../data/ref_finance";
 import { NearConfig } from "../data/near";
+import MutedDecimals from "./MutedDecimals";
 
 export default function Rate(props) {
   const [view, setView] = useState(1);
@@ -45,19 +46,26 @@ export default function Rate(props) {
           {view === 0 ? (
             <div>
               1 <TokenSymbol tokenAccountId={inTokenAccountId} /> ={" "}
-              <span className="rate-value">{bigToString(price)}</span>{" "}
+              <span className="rate-value">
+                <MutedDecimals value={bigToString(price)} />
+              </span>{" "}
               <TokenSymbol tokenAccountId={out.tokenAccountId} />
             </div>
           ) : view === 1 ? (
             <div>
               1 <TokenSymbol tokenAccountId={out.tokenAccountId} /> ={" "}
-              <span className="rate-value">{bigToString(inversePrice)}</span>{" "}
+              <span className="rate-value">
+                <MutedDecimals value={bigToString(inversePrice)} />
+              </span>{" "}
               <TokenSymbol tokenAccountId={inTokenAccountId} />
             </div>
           ) : (
             <div>
               1 <TokenSymbol tokenAccountId={out.tokenAccountId} /> = ~
-              <span className="rate-value">{bigToString(usdBalance)}</span> USD
+              <span className="rate-value">
+                <MutedDecimals value={bigToString(usdBalance)} />
+              </span>{" "}
+              USD
             </div>
           )}
         </div>

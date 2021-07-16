@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import uuid from "react-uuid";
 
 export default function AvailableInput(props) {
-  const [inputId] = useState(uuid());
+  const [inputId] = useState(props.id || uuid());
   const [isMax, setIsMax] = useState(false);
   const limit = props.limit;
   const value = props.value;
@@ -23,9 +23,9 @@ export default function AvailableInput(props) {
     <div className="input-group mb-3">
       <div className="form-floating" style={{ flex: "1 1 auto", width: "1%" }}>
         <input
+          id={inputId}
           className="form-control"
           type="number"
-          input={inputId}
           placeholder={"1"}
           value={innerValue || ""}
           onChange={(e) => {

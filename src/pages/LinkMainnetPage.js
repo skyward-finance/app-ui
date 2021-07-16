@@ -3,7 +3,7 @@ import { useAccount } from "../data/account";
 import { singletonHook } from "react-singleton-hook";
 import * as nearAPI from "near-api-js";
 import { MainNearConfig, NearConfig, TGas } from "../data/near";
-import AccountBalance from "../components/AccountBalance";
+import { AccountBalance } from "../components/AccountBalance";
 import Big from "big.js";
 import TokenAndBalance from "../components/TokenAndBalance";
 import { useToken } from "../data/token";

@@ -3,6 +3,7 @@ import { useToken } from "../data/token";
 import { bigToString, fromTokenBalance } from "../data/utils";
 import { useRefFinance } from "../data/ref_finance";
 import { NearConfig } from "../data/near";
+import MutedDecimals from "./MutedDecimals";
 
 export default function TokenBalance(props) {
   const [showUsd, setShowUsd] = useState(false);
@@ -21,12 +22,17 @@ export default function TokenBalance(props) {
 
   return (
     <span
-      className={`font-monospace ${clickable ? "pointer" : ""}`}
+      className={`font-monospace fw-bold ${clickable ? "pointer" : ""}`}
       onClick={() => clickable && setShowUsd(!showUsd)}
     >
-      {showUsd
-        ? `~$${bigToString(fromTokenBalance(token, usdBalance))}`
-        : bigToString(fromTokenBalance(token, balance))}
+      {showUsd && <span className="text-secondary">~$</span>}
+      <MutedDecimals
+        value={
+          showUsd
+            ? bigToString(fromTokenBalance(token, usdBalance))
+            : bigToString(fromTokenBalance(token, balance))
+        }
+      />
     </span>
   );
 }

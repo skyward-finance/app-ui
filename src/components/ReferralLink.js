@@ -1,6 +1,7 @@
 import React from "react";
 import { useAccount } from "../data/account";
 import TokenSymbol from "./TokenSymbol";
+import { skywardUrl } from "../data/utils";
 
 export default function ReferralLink(props) {
   const sale = props.sale;
@@ -10,10 +11,7 @@ export default function ReferralLink(props) {
   }
 
   const referralLink =
-    window.location.protocol +
-    "//" +
-    window.location.host +
-    `/sale/${sale.saleId}?r=${account.accountId}`;
+    skywardUrl() + `/sale/${sale.saleId}?r=${account.accountId}`;
 
   return (
     <div className={"card mb-2"}>

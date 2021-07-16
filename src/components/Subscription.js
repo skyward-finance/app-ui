@@ -492,16 +492,16 @@ export default function Subscription(props) {
             <div>
               <h5>
                 Deposit{" "}
-                <TokenSymbol
-                  tokenAccountId={sale.inTokenAccountId}
-                  className="font-monospace"
-                />{" "}
+                <span className="font-monospace">
+                  <TokenSymbol tokenAccountId={sale.inTokenAccountId} />
+                </span>{" "}
                 to receive{" "}
-                <TokenSymbol
-                  tokenAccountId={sale.outTokens[0].tokenAccountId}
-                  balance={subscription.unclaimedOutBalances[0]}
-                  className="font-monospace"
-                />
+                <span className="font-monospace">
+                  <TokenSymbol
+                    tokenAccountId={sale.outTokens[0].tokenAccountId}
+                    balance={subscription.unclaimedOutBalances[0]}
+                  />
+                </span>{" "}
               </h5>
               <AvailableInput
                 value={extraDeposit}
@@ -539,10 +539,9 @@ export default function Subscription(props) {
             <div>
               <h5>
                 Withdraw{" "}
-                <TokenSymbol
-                  tokenAccountId={sale.inTokenAccountId}
-                  className="font-monospace"
-                />{" "}
+                <span className="font-monospace">
+                  <TokenSymbol tokenAccountId={sale.inTokenAccountId} />
+                </span>{" "}
                 from sale
               </h5>
               <AvailableInput

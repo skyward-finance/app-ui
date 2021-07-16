@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useAccount } from "../data/account";
 import uuid from "react-uuid";
-import AccountBalance from "./AccountBalance";
+import { AccountBalance } from "./AccountBalance";
 import { Loading } from "../data/utils";
 import LockupAccount from "./LockupAccount";
 
@@ -15,6 +15,7 @@ export default function Account(props) {
           <AccountBalance
             key={`${gkey}-${tokenAccountId}`}
             tokenAccountId={tokenAccountId}
+            clickable
           />
         ))
       : [];
@@ -39,9 +40,6 @@ export default function Account(props) {
 
             <div>Balances</div>
             <div>{balances}</div>
-            {/*<div>*/}
-            {/*  <AccountRegisterToken />*/}
-            {/*</div>*/}
           </div>
         )}
       </div>

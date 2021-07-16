@@ -10,6 +10,9 @@ export const OneNear = Big(10).pow(24);
 export const OneSkyward = Big(10).pow(18);
 const AccountSafetyMargin = OneNear.div(2);
 
+export const skywardUrl = () =>
+  window.location.protocol + "//" + window.location.host;
+
 export const Loading = (
   <span
     className="spinner-grow spinner-grow-sm me-1"

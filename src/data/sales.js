@@ -25,6 +25,13 @@ const mapSubscription = (s) => {
 
 const saleRefreshTimers = {};
 
+export const addSaleMethods = (s) => {
+  s.started = () => s.remainingDuration < s.duration;
+  s.ended = () => s.remainingDuration === 0;
+  s.farAhead = () => !s.started() && s.startTime - s.currentTime > OneWeek;
+  return s;
+};
+
 export const mapSale = (s) => {
   s = keysToCamel(s);
   s.outTokens.forEach((o) => {
@@ -54,10 +61,7 @@ export const mapSale = (s) => {
   if (s.subscription) {
     s.subscription = mapSubscription(s.subscription);
   }
-  s.started = () => s.remainingDuration < s.duration;
-  s.ended = () => s.remainingDuration === 0;
-  s.farAhead = () => !s.started() && s.startTime - s.currentTime > OneWeek;
-  return s;
+  return addSaleMethods(s);
 };
 
 export const useSales = singletonHook(defaultSales, () => {

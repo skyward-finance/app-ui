@@ -1,12 +1,16 @@
 import * as nearAPI from "near-api-js";
 import { singletonHook } from "react-singleton-hook";
 import Big from "big.js";
+import { OneNear } from "./utils";
 
 export const TGas = Big(10).pow(12);
 export const StorageCostPerByte = Big(10).pow(19);
 export const TokenStorageDeposit = StorageCostPerByte.mul(125);
 export const SkywardRegisterStorageDeposit = StorageCostPerByte.mul(1200);
 export const SubscribeDeposit = StorageCostPerByte.mul(1000);
+export const CreateSaleDeposit = OneNear.mul(10).add(
+  StorageCostPerByte.mul(5000)
+);
 
 export const randomPublicKey = nearAPI.utils.PublicKey.from(
   "ed25519:8fWHD35Rjd78yeowShh9GwhRudRtLLsGCRjZtgPjAtw9"
@@ -137,7 +141,7 @@ async function _initNear() {
     );
   };
 
-  _near.sendTransactions = async (items) => {
+  _near.sendTransactions = async (items, callbackUrl) => {
     let [nonce, blockHash] = await Promise.all([
       _near.fetchNextNonce(),
       _near.fetchBlockHash(),
@@ -166,7 +170,10 @@ async function _initNear() {
       }
       actions.push(action);
     });
-    return await _near.walletConnection.requestSignTransactions(transactions);
+    return await _near.walletConnection.requestSignTransactions(
+      transactions,
+      callbackUrl
+    );
   };
 
   _near.archivalViewCall = async (blockId, contractId, methodName, args) => {
