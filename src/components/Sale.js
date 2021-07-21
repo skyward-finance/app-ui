@@ -7,6 +7,7 @@ import Subscription from "./Subscription";
 import ReferralLink from "./ReferralLink";
 import PriceHistory from "./PriceHistory";
 import SaleRate from "./SaleRate";
+import SaleStats from "./SaleStats";
 
 export default function Sale(props) {
   const sale = props.sale;
@@ -21,6 +22,7 @@ export default function Sale(props) {
           <hr />
           <SaleInputOutputs sale={sale} detailed />
           <SaleRate sale={sale} />
+          <SaleStats sale={sale} />
           <hr />
           <RemainingDuration sale={sale} />
         </div>
