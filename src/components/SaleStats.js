@@ -31,7 +31,8 @@ export default function SaleRate(props) {
                 return res.json().then(response => {
                     setParticipants(Number(response[0]["total_participants"]));
                 });
-            });
+            })
+            .catch((e) => false);
     });
 
     return (
