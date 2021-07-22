@@ -2,10 +2,13 @@ import "./Rate.scss";
 import React, { useState } from "react";
 import TokenSymbol from "./TokenSymbol";
 import Big from "big.js";
-import { bigToString, fromTokenBalance } from "../data/utils";
+import {
+  bigToString,
+  computeUsdBalance,
+  fromTokenBalance,
+} from "../data/utils";
 import { useToken } from "../data/token";
 import { useRefFinance } from "../data/ref_finance";
-import { NearConfig } from "../data/near";
 import MutedDecimals from "./MutedDecimals";
 
 export default function Rate(props) {
@@ -25,13 +28,12 @@ export default function Rate(props) {
   const inversePrice = price && price.gt(0) ? Big(1).div(price) : null;
 
   const refFinance = useRefFinance();
-  const usdBalance =
-    refFinance &&
-    !refFinance.loading &&
-    inTokenAccountId === NearConfig.wrapNearAccountId &&
+  const usdBalance = computeUsdBalance(
+    inToken,
+    refFinance,
+    inTokenAccountId,
     inversePrice
-      ? inversePrice.mul(refFinance.nearPrice)
-      : false;
+  );
 
   const numViews = usdBalance ? 3 : 2;
 

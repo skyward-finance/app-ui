@@ -143,3 +143,28 @@ export const getCurrentReferralId = (saleId) => {
   }
   return null;
 };
+
+export const computeUsdBalance = (
+  token,
+  refFinance,
+  tokenAccountId,
+  balance
+) => {
+  if (refFinance && !refFinance.loading && balance) {
+    if (tokenAccountId === NearConfig.wrapNearAccountId) {
+      return balance.mul(refFinance.nearPrice);
+    } else if (
+      tokenAccountId in refFinance.prices &&
+      refFinance.nearPrice.gt(0)
+    ) {
+      const p = refFinance.prices[tokenAccountId];
+      if (token.metadata) {
+        const ot = p.totalOther
+          .mul(OneNear)
+          .div(Big(10).pow(token.metadata.decimals));
+        return balance.mul(p.totalNear).div(ot).mul(refFinance.nearPrice);
+      }
+    }
+  }
+  return null;
+};

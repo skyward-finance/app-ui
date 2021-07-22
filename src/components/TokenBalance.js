@@ -1,8 +1,11 @@
 import React, { useState } from "react";
 import { useToken } from "../data/token";
-import { bigToString, fromTokenBalance } from "../data/utils";
+import {
+  bigToString,
+  computeUsdBalance,
+  fromTokenBalance,
+} from "../data/utils";
 import { useRefFinance } from "../data/ref_finance";
-import { NearConfig } from "../data/near";
 import MutedDecimals from "./MutedDecimals";
 
 export default function TokenBalance(props) {
@@ -11,12 +14,12 @@ export default function TokenBalance(props) {
   const balance = props.balance;
   const token = useToken(tokenAccountId);
   const refFinance = useRefFinance();
-  const usdBalance =
-    refFinance &&
-    !refFinance.loading &&
-    tokenAccountId === NearConfig.wrapNearAccountId
-      ? balance.mul(refFinance.nearPrice)
-      : false;
+  const usdBalance = computeUsdBalance(
+    token,
+    refFinance,
+    tokenAccountId,
+    balance
+  );
 
   const clickable = props.clickable && usdBalance;
 

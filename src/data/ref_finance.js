@@ -50,9 +50,9 @@ export const useRefFinance = singletonHook(defaultRefFinance, () => {
         }
       );
 
-      const limit = 100;
+      const limit = 250;
       // Limit pools for now until we need other prices.
-      const numPools = Math.min(limit, await refContract.get_number_of_pools());
+      const numPools = Math.min(10000, await refContract.get_number_of_pools());
       const promises = [];
       for (let i = 0; i < numPools; i += limit) {
         promises.push(refContract.get_pools({ from_index: i, limit }));
@@ -77,21 +77,35 @@ export const useRefFinance = singletonHook(defaultRefFinance, () => {
         }
       });
 
-      let totalNearInUsdPools = Big(0);
-      let totalUsdInUsdPools = Big(0);
       const wNEAR = NearConfig.wrapNearAccountId;
+
+      let prices = {};
 
       Object.values(pools).forEach((pool) => {
         if (wNEAR in pool.tokens) {
           pool.otherToken = ot(pool, wNEAR);
-          if (pool.otherToken in usdTokens) {
-            totalNearInUsdPools = totalNearInUsdPools.add(pool.tokens[wNEAR]);
-            totalUsdInUsdPools = totalUsdInUsdPools.add(
-              pool.tokens[pool.otherToken]
-                .mul(OneNear)
-                .div(usdTokens[pool.otherToken])
-            );
+          const p = prices[pool.otherToken] || {
+            totalNear: Big(0),
+            totalOther: Big(0),
+          };
+          p.totalNear = p.totalNear.add(pool.tokens[wNEAR]);
+          p.totalOther = p.totalOther.add(pool.tokens[pool.otherToken]);
+          if (p.totalNear.gt(0)) {
+            prices[pool.otherToken] = p;
           }
+        }
+      });
+
+      let totalNearInUsdPools = Big(0);
+      let totalUsdInUsdPools = Big(0);
+
+      Object.entries(usdTokens).forEach(([tokenId, one]) => {
+        if (tokenId in prices) {
+          const p = prices[tokenId];
+          totalNearInUsdPools = totalNearInUsdPools.add(p.totalNear);
+          totalUsdInUsdPools = totalUsdInUsdPools.add(
+            p.totalOther.mul(OneNear).div(one)
+          );
         }
       });
 
@@ -104,6 +118,7 @@ export const useRefFinance = singletonHook(defaultRefFinance, () => {
         pools,
         nearPrice,
         refContract,
+        prices,
       });
     });
   }, [_near]);
