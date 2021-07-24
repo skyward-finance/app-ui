@@ -1,5 +1,10 @@
 import Big from "big.js";
-import { LsKey, NearConfig } from "./near";
+import {
+  BridgeTokenStorageDeposit,
+  LsKey,
+  NearConfig,
+  TokenStorageDeposit,
+} from "./near";
 import React from "react";
 import ls from "local-storage";
 
@@ -167,4 +172,10 @@ export const computeUsdBalance = (
     }
   }
   return null;
+};
+
+export const tokenStorageDeposit = async (tokenAccountId) => {
+  return tokenAccountId.endsWith(".bridge.near")
+    ? BridgeTokenStorageDeposit
+    : TokenStorageDeposit;
 };

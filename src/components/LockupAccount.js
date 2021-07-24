@@ -1,13 +1,8 @@
 import React, { useState } from "react";
-import { dateToString, Loading } from "../data/utils";
+import { dateToString, Loading, tokenStorageDeposit } from "../data/utils";
 import Timer from "react-compound-timer";
 import TokenBalance from "./TokenBalance";
-import {
-  NearConfig,
-  SkywardRegisterStorageDeposit,
-  TGas,
-  TokenStorageDeposit,
-} from "../data/near";
+import { NearConfig, SkywardRegisterStorageDeposit, TGas } from "../data/near";
 import TokenSymbol from "./TokenSymbol";
 import * as nearAPI from "near-api-js";
 import { useToken } from "../data/token";
@@ -65,7 +60,9 @@ export default function LockupAccount(props) {
             registration_only: true,
           },
           TGas.mul(5).toFixed(0),
-          TokenStorageDeposit.toFixed(0)
+          (await tokenStorageDeposit(NearConfig.skywardTokenAccountId)).toFixed(
+            0
+          )
         ),
       ]);
     }

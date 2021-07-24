@@ -2,18 +2,14 @@ import React, { useState } from "react";
 import uuid from "react-uuid";
 import TokenAndBalance from "./TokenAndBalance";
 import { useTreasury } from "../data/treasury";
-import {
-  NearConfig,
-  SkywardRegisterStorageDeposit,
-  TGas,
-  TokenStorageDeposit,
-} from "../data/near";
+import { NearConfig, SkywardRegisterStorageDeposit, TGas } from "../data/near";
 import {
   bigMin,
   bigToString,
   fromTokenBalance,
   Loading,
   OneSkyward,
+  tokenStorageDeposit,
   toTokenBalance,
 } from "../data/utils";
 import TokenSymbol from "./TokenSymbol";
@@ -191,7 +187,7 @@ function Account(props) {
               registration_only: true,
             },
             TGas.mul(5).toFixed(0),
-            TokenStorageDeposit.toFixed(0)
+            (await tokenStorageDeposit(receivingTokens[i])).toFixed(0)
           ),
         ]);
       }

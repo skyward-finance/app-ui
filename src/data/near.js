@@ -6,6 +6,7 @@ import { OneNear } from "./utils";
 export const TGas = Big(10).pow(12);
 export const StorageCostPerByte = Big(10).pow(19);
 export const TokenStorageDeposit = StorageCostPerByte.mul(125);
+export const BridgeTokenStorageDeposit = StorageCostPerByte.mul(1250);
 export const SkywardRegisterStorageDeposit = StorageCostPerByte.mul(2000);
 export const SubscribeDeposit = StorageCostPerByte.mul(2000);
 export const CreateSaleDeposit = OneNear.mul(10).add(

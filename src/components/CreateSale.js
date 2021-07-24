@@ -9,6 +9,7 @@ import {
   fromTokenBalance,
   Loading,
   skywardUrl,
+  tokenStorageDeposit,
   toTokenBalance,
 } from "../data/utils";
 import SalePreview from "./SalePreview";
@@ -22,7 +23,6 @@ import {
   NearConfig,
   SkywardRegisterStorageDeposit,
   TGas,
-  TokenStorageDeposit,
 } from "../data/near";
 import * as nearAPI from "near-api-js";
 
@@ -139,7 +139,7 @@ export default function CreatSale(props) {
               registration_only: true,
             },
             TGas.mul(5).toFixed(0),
-            TokenStorageDeposit.toFixed(0)
+            (await tokenStorageDeposit(outputTokenId)).toFixed(0)
           ),
         ]);
       }
@@ -171,7 +171,7 @@ export default function CreatSale(props) {
             registration_only: true,
           },
           TGas.mul(5).toFixed(0),
-          TokenStorageDeposit.toFixed(0)
+          (await tokenStorageDeposit(outputTokenId)).toFixed(0)
         ),
       ]);
     }

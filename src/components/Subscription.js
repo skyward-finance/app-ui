@@ -6,11 +6,12 @@ import Rate from "./Rate";
 import Big from "big.js";
 import TokenSymbol from "./TokenSymbol";
 import {
-  availableNearBalance,
+  bigMin,
   bigToString,
   fromTokenBalance,
   getCurrentReferralId,
   Loading,
+  tokenStorageDeposit,
   toTokenBalance,
 } from "../data/utils";
 import { isTokenRegistered, useToken } from "../data/token";
@@ -21,19 +22,21 @@ import {
   SkywardRegisterStorageDeposit,
   SubscribeDeposit,
   TGas,
-  TokenStorageDeposit,
 } from "../data/near";
 import * as nearAPI from "near-api-js";
 import AvailableInput from "./AvailableInput";
 import ls from "local-storage";
 import TokenBalance from "./TokenBalance";
 import { useSales } from "../data/sales";
+import { useTokenBalances } from "../data/tokenBalances";
+import { BalanceType } from "./AccountBalance";
 
 const DepositMode = "Deposit";
 const WithdrawMode = "Withdrawal";
 
 export default function Subscription(props) {
   const withdrawToWalletLsKey = LsKey + "withdrawToWallet";
+  const allowDepositFromRefLsKey = LsKey + "allowDepositFromRef";
 
   const [mode, setMode] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -42,7 +45,9 @@ export default function Subscription(props) {
   const [withdrawToWallet, setWithdrawToWallet] = useState(
     ls.get(withdrawToWalletLsKey) || false
   );
-  const [inBalance, setInBalance] = useState(null);
+  const [allowDepositFromRef, setAllowDepositFromRef] = useState(
+    ls.get(allowDepositFromRefLsKey) || true
+  );
   const sale = props.sale;
   const sales = useSales();
 
@@ -59,26 +64,14 @@ export default function Subscription(props) {
   };
 
   let availableInToken = Big(0);
-  let nativeNearBalance = availableNearBalance(account);
+  const { tokenBalances } = useTokenBalances(sale.inTokenAccountId);
 
-  if (account && !account.loading && account.accountId) {
-    if (sale.inTokenAccountId in account.balances) {
-      availableInToken = availableInToken.add(
-        account.balances[sale.inTokenAccountId]
-      );
-    }
-    if (inToken) {
-      if (inBalance !== null) {
-        availableInToken = availableInToken.add(inBalance);
-      } else {
-        inToken.contract
-          .balanceOf(account, account.accountId)
-          .then((v) => setInBalance(v));
+  if (tokenBalances) {
+    Object.entries(tokenBalances).forEach(([key, balance]) => {
+      if (balance && (allowDepositFromRef || key !== BalanceType.Ref)) {
+        availableInToken = availableInToken.add(balance);
       }
-    }
-    if (sale.inTokenAccountId === NearConfig.wrapNearAccountId) {
-      availableInToken = availableInToken.add(nativeNearBalance);
-    }
+    });
   }
   const availableInTokenHuman = fromTokenBalance(inToken, availableInToken);
   const subRemainingInBalanceHuman = fromTokenBalance(
@@ -181,35 +174,72 @@ export default function Subscription(props) {
         ),
       ]);
     }
+    const inBalance = tokenBalances[BalanceType.Wallet] || Big(0);
+    let remainingInBalance = fromInToken.sub(bigMin(fromInToken, inBalance));
+
+    if (!(await inToken.contract.isRegistered(account, account.accountId))) {
+      actions.push([
+        sale.inTokenAccountId,
+        nearAPI.transactions.functionCall(
+          "storage_deposit",
+          {
+            account_id: account.accountId,
+            registration_only: true,
+          },
+          TGas.mul(5).toFixed(0),
+          (await tokenStorageDeposit(sale.inTokenAccountId)).toFixed(0)
+        ),
+      ]);
+    }
 
     if (sale.inTokenAccountId === NearConfig.wrapNearAccountId) {
-      if (!(await inToken.contract.isRegistered(account, account.accountId))) {
-        actions.push([
-          sale.inTokenAccountId,
-          nearAPI.transactions.functionCall(
-            "storage_deposit",
-            {
-              account_id: account.accountId,
-              registration_only: true,
-            },
-            TGas.mul(5).toFixed(0),
-            TokenStorageDeposit.toFixed(0)
-          ),
-        ]);
-      }
       // wrap NEAR
-      if (fromInToken.gt(inBalance)) {
-        const amountFromAccount = fromInToken.sub(inBalance);
-        actions.push([
-          sale.inTokenAccountId,
-          nearAPI.transactions.functionCall(
-            "near_deposit",
-            {},
-            TGas.mul(5).toFixed(0),
-            amountFromAccount.toFixed(0)
-          ),
-        ]);
+      if (remainingInBalance.gt(0)) {
+        const availableAccountAmount =
+          tokenBalances[BalanceType.NEAR] || Big(0);
+        const amountFromAccount = bigMin(
+          availableAccountAmount,
+          remainingInBalance
+        );
+        if (amountFromAccount.gt(0)) {
+          remainingInBalance = remainingInBalance.sub(amountFromAccount);
+          actions.push([
+            sale.inTokenAccountId,
+            nearAPI.transactions.functionCall(
+              "near_deposit",
+              {},
+              TGas.mul(5).toFixed(0),
+              amountFromAccount.toFixed(0)
+            ),
+          ]);
+        }
       }
+    }
+
+    // Trying Ref deposit
+    const refBalance = tokenBalances[BalanceType.Ref] || Big(0);
+    if (allowDepositFromRef && remainingInBalance.gt(0) && refBalance.gt(0)) {
+      const amountFromRef = bigMin(remainingInBalance, refBalance);
+      remainingInBalance = remainingInBalance.sub(amountFromRef);
+      actions.push([
+        NearConfig.refContractName,
+        nearAPI.transactions.functionCall(
+          "withdraw",
+          {
+            token_id: sale.inTokenAccountId,
+            amount: amountFromRef.toFixed(0),
+            unregister: false,
+          },
+          TGas.mul(50).toFixed(0),
+          1
+        ),
+      ]);
+    }
+
+    if (remainingInBalance.gt(0)) {
+      throw new Error(
+        `Remaining balance ${remainingInBalance.toFixed(0)} is greater than 0`
+      );
     }
 
     if (
@@ -224,7 +254,7 @@ export default function Subscription(props) {
             registration_only: true,
           },
           TGas.mul(5).toFixed(0),
-          TokenStorageDeposit.toFixed(0)
+          (await tokenStorageDeposit(sale.inTokenAccountId)).toFixed(0)
         ),
       ]);
     }
@@ -319,7 +349,7 @@ export default function Subscription(props) {
               registration_only: true,
             },
             TGas.mul(5).toFixed(0),
-            TokenStorageDeposit.toFixed(0)
+            (await tokenStorageDeposit(sale.inTokenAccountId)).toFixed(0)
           ),
         ]);
       }
@@ -379,7 +409,7 @@ export default function Subscription(props) {
               registration_only: true,
             },
             TGas.mul(5).toFixed(0),
-            TokenStorageDeposit.toFixed(0)
+            (await tokenStorageDeposit(outTokens[i])).toFixed(0)
           ),
         ]);
       }
@@ -508,6 +538,29 @@ export default function Subscription(props) {
                 setValue={(v) => setExtraDeposit(v)}
                 limit={availableInTokenHuman}
               />
+              <div className="form-check">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  id="allowDepositFromRef"
+                  checked={allowDepositFromRef}
+                  onChange={(e) => {
+                    ls.set(allowDepositFromRefLsKey, e.target.checked);
+                    setAllowDepositFromRef(e.target.checked);
+                  }}
+                />
+                <label
+                  className="form-check-label"
+                  htmlFor="allowDepositFromRef"
+                >
+                  Use balance from Ref Finance
+                  <span className="text-muted">
+                    {" "}
+                    (if checked, the available balance will display balance from
+                    Ref Finance)
+                  </span>
+                </label>
+              </div>
               <div className="clearfix">
                 <button
                   className="btn btn-success"
@@ -562,6 +615,11 @@ export default function Subscription(props) {
                 />
                 <label className="form-check-label" htmlFor="withdrawToWallet">
                   Withdraw to Wallet
+                  <span className="text-muted">
+                    {" "}
+                    (if checked, the token will be also transferred from the
+                    internal balance to the wallet)
+                  </span>
                 </label>
               </div>
 
