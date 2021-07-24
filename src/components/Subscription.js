@@ -10,6 +10,7 @@ import {
   bigToString,
   fromTokenBalance,
   getCurrentReferralId,
+  isBridgeToken,
   Loading,
   tokenStorageDeposit,
   toTokenBalance,
@@ -17,6 +18,7 @@ import {
 import { isTokenRegistered, useToken } from "../data/token";
 import { useAccount } from "../data/account";
 import {
+  IsMainnet,
   LsKey,
   NearConfig,
   SkywardRegisterStorageDeposit,
@@ -563,7 +565,7 @@ export default function Subscription(props) {
               </div>
               <div className="clearfix">
                 <button
-                  className="btn btn-success"
+                  className="btn btn-success m-1"
                   disabled={
                     !extraDeposit ||
                     extraDeposit.gt(availableInTokenHuman) ||
@@ -577,7 +579,7 @@ export default function Subscription(props) {
                   <TokenSymbol tokenAccountId={sale.inTokenAccountId} />
                 </button>
                 <button
-                  className="btn btn-secondary float-end"
+                  className="btn btn-secondary float-end m-1"
                   type="button"
                   onClick={() => {
                     setExtraDeposit(null);
@@ -586,6 +588,30 @@ export default function Subscription(props) {
                 >
                   Cancel
                 </button>
+                {IsMainnet &&
+                  sale.inTokenAccountId !== NearConfig.wrapNearAccountId && (
+                    <a
+                      className={`btn btn-outline-primary m-1`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      href={`https://app.ref.finance/#wrap.near|${sale.inTokenAccountId}`}
+                    >
+                      Buy <TokenSymbol tokenAccountId={sale.inTokenAccountId} />{" "}
+                      on Ref Finance
+                    </a>
+                  )}
+                {IsMainnet && isBridgeToken(sale.inTokenAccountId) && (
+                  <a
+                    className={`btn btn-outline-primary m-1`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    href={`https://ethereum.bridgetonear.org/`}
+                  >
+                    Bridge{" "}
+                    <TokenSymbol tokenAccountId={sale.inTokenAccountId} /> from
+                    Ethereum
+                  </a>
+                )}
               </div>
             </div>
           ) : mode === WithdrawMode ? (
@@ -639,7 +665,7 @@ export default function Subscription(props) {
                   <TokenSymbol tokenAccountId={sale.inTokenAccountId} />
                 </button>
                 <button
-                  className="btn btn-secondary float-end"
+                  className="btn btn-secondary float-end m-1"
                   type="button"
                   onClick={() => {
                     setWithdrawAmount(null);

@@ -174,8 +174,12 @@ export const computeUsdBalance = (
   return null;
 };
 
+export const isBridgeToken = (tokenAccountId) => {
+  return tokenAccountId.endsWith(".bridge.near");
+};
+
 export const tokenStorageDeposit = async (tokenAccountId) => {
-  return tokenAccountId.endsWith(".bridge.near")
+  return isBridgeToken(tokenAccountId)
     ? BridgeTokenStorageDeposit
     : TokenStorageDeposit;
 };
