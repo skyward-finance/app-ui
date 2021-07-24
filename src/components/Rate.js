@@ -8,7 +8,7 @@ import {
   fromTokenBalance,
 } from "../data/utils";
 import { useToken } from "../data/token";
-import { useRefFinance } from "../data/ref_finance";
+import { useRefFinance } from "../data/refFinance";
 import MutedDecimals from "./MutedDecimals";
 
 export default function Rate(props) {

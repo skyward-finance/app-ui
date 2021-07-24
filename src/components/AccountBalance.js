@@ -9,11 +9,13 @@ import { availableNearBalance, Loading } from "../data/utils";
 import * as nearAPI from "near-api-js";
 import TokenBalance from "./TokenBalance";
 import Big from "big.js";
+import { useRefFinance } from "../data/refFinance";
 
 export const BalanceType = {
   Internal: "Internal",
   Wallet: "Wallet",
   NEAR: "NEAR",
+  Ref: "Ref",
 };
 
 export function AccountBalance(props) {
@@ -25,6 +27,7 @@ export function AccountBalance(props) {
     tokenAccountId
   );
   const account = useAccount();
+  const refFinance = useRefFinance();
 
   const token = useToken(tokenAccountId);
 
@@ -38,6 +41,7 @@ export function AccountBalance(props) {
   const [withdrawableBalance, setWithdrawableBalance] = useState(Big(0));
 
   const onFetchedBalances = props.onFetchedBalances;
+  const [fetchedBalances, setFetchedBalances] = useState({});
 
   useEffect(() => {
     const balances = [];
@@ -45,14 +49,18 @@ export function AccountBalance(props) {
     if (account && !account.loading) {
       let withdrawableBalance = Big(0);
       if (tokenAccountId in account.balances) {
-        balances.push(["INTERNAL: ", account.balances[tokenAccountId]]);
-        withdrawableBalance = account.balances[tokenAccountId];
-        fetchedBalances[BalanceType.Internal] =
-          account.balances[tokenAccountId];
+        const balance = account.balances[tokenAccountId];
+        if (balance.gt(0)) {
+          balances.push(["INTERNAL: ", balance]);
+        }
+        withdrawableBalance = withdrawableBalance.add(balance);
+        fetchedBalances[BalanceType.Internal] = balance;
       }
       if (tokenBalance !== null) {
         if (tokenBalance) {
-          balances.push(["WALLET: ", tokenBalance]);
+          if (tokenBalance.gt(0)) {
+            balances.push(["WALLET: ", tokenBalance]);
+          }
           fetchedBalances[BalanceType.Wallet] = tokenBalance;
         }
       } else {
@@ -70,16 +78,34 @@ export function AccountBalance(props) {
         tokenAccountId === NearConfig.wrapNearAccountId
       ) {
         let nativeNearBalance = availableNearBalance(account);
-        balances.push(["NEAR: ", nativeNearBalance]);
+        if (nativeNearBalance.gt(0)) {
+          balances.push(["NEAR: ", nativeNearBalance]);
+        }
         fetchedBalances[BalanceType.NEAR] = nativeNearBalance;
+      }
+      if (refFinance && tokenAccountId in refFinance.balances) {
+        const balance = refFinance.balances[tokenAccountId];
+        if (balance.gt(0)) {
+          balances.push(["REF FINANCE: ", balance]);
+        }
+        withdrawableBalance = withdrawableBalance.add(balance);
+        fetchedBalances[BalanceType.Ref] = balance;
       }
       setBalances([...balances]);
       setWithdrawableBalance(withdrawableBalance);
+      setFetchedBalances(fetchedBalances);
       if (onFetchedBalances) {
         onFetchedBalances(fetchedBalances);
       }
     }
-  }, [account, token, tokenAccountId, tokenBalance, onFetchedBalances]);
+  }, [
+    refFinance,
+    account,
+    token,
+    tokenAccountId,
+    tokenBalance,
+    onFetchedBalances,
+  ]);
 
   const clickable = props.clickable && withdrawableBalance.gt(0);
 
@@ -104,30 +130,55 @@ export function AccountBalance(props) {
       ]);
     }
 
-    actions.push([
-      NearConfig.contractName,
-      nearAPI.transactions.functionCall(
-        "withdraw_token",
-        {
-          token_account_id: tokenAccountId,
-        },
-        TGas.mul(40).toFixed(0),
-        0
-      ),
-    ]);
+    let isInternal = false;
+    if (
+      BalanceType.Internal in fetchedBalances &&
+      fetchedBalances[BalanceType.Internal].gt(0)
+    ) {
+      isInternal = true;
+      actions.push([
+        NearConfig.contractName,
+        nearAPI.transactions.functionCall(
+          "withdraw_token",
+          {
+            token_account_id: tokenAccountId,
+          },
+          TGas.mul(40).toFixed(0),
+          0
+        ),
+      ]);
+    }
+
+    if (
+      BalanceType.Ref in fetchedBalances &&
+      fetchedBalances[BalanceType.Ref].gt(0)
+    ) {
+      actions.push([
+        NearConfig.refContractName,
+        nearAPI.transactions.functionCall(
+          "withdraw",
+          {
+            token_id: tokenAccountId,
+            amount: fetchedBalances[BalanceType.Ref].toFixed(0),
+            unregister: false,
+          },
+          TGas.mul(50).toFixed(0),
+          1
+        ),
+      ]);
+    }
 
     if (tokenAccountId === NearConfig.wrapNearAccountId) {
       const tokenBalance = await token.contract.balanceOf(
         account,
         account.accountId
       );
-      const internalBalance = account.balances[tokenAccountId];
       actions.push([
         NearConfig.wrapNearAccountId,
         nearAPI.transactions.functionCall(
           "near_withdraw",
           {
-            amount: tokenBalance.add(internalBalance).toFixed(0),
+            amount: tokenBalance.add(withdrawableBalance).toFixed(0),
           },
           TGas.mul(10).toFixed(0),
           1
@@ -135,7 +186,7 @@ export function AccountBalance(props) {
       ]);
     }
 
-    if (actions.length === 1) {
+    if (actions.length === 1 && isInternal) {
       // simple
       await account.near.contract.withdraw_token(
         {
@@ -146,6 +197,7 @@ export function AccountBalance(props) {
       );
     } else {
       await account.near.sendTransactions(actions);
+      return;
     }
     await account.refresh();
     setTokenBalance(null);

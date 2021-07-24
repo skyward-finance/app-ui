@@ -158,7 +158,7 @@ export const computeUsdBalance = (
       refFinance.nearPrice.gt(0)
     ) {
       const p = refFinance.prices[tokenAccountId];
-      if (token.metadata) {
+      if (token && token.metadata) {
         const ot = p.totalOther
           .mul(OneNear)
           .div(Big(10).pow(token.metadata.decimals));

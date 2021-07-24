@@ -5,7 +5,7 @@ import {
   computeUsdBalance,
   fromTokenBalance,
 } from "../data/utils";
-import { useRefFinance } from "../data/ref_finance";
+import { useRefFinance } from "../data/refFinance";
 import MutedDecimals from "./MutedDecimals";
 
 export default function TokenBalance(props) {
