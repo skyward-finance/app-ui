@@ -1,5 +1,5 @@
 import { singletonHook } from "react-singleton-hook";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { NearConfig } from "./near";
 import Big from "big.js";
 import * as nearAPI from "near-api-js";
@@ -136,9 +136,11 @@ export const useRefFinance = singletonHook(defaultRefFinance, () => {
   const [refFinance, setRefFinance] = useState(defaultRefFinance);
   const account = useAccount();
 
-  if (account && !account.loading) {
-    fetchRefData(account).then(setRefFinance);
-  }
+  useEffect(() => {
+    if (account && !account.loading) {
+      fetchRefData(account).then(setRefFinance);
+    }
+  }, [account]);
 
   return refFinance;
 });
