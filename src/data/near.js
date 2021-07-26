@@ -4,6 +4,7 @@ import Big from "big.js";
 import { OneNear } from "./utils";
 
 export const TGas = Big(10).pow(12);
+export const MaxGasPerTransaction = TGas.mul(300);
 export const StorageCostPerByte = Big(10).pow(19);
 export const TokenStorageDeposit = StorageCostPerByte.mul(125);
 export const BridgeTokenStorageDeposit = StorageCostPerByte.mul(1250);
@@ -151,9 +152,16 @@ async function _initNear() {
     const transactions = [];
     let actions = [];
     let currentReceiverId = null;
+    let currentTotalGas = Big(0);
     items.push([null, null]);
     items.forEach(([receiverId, action]) => {
-      if (receiverId !== currentReceiverId) {
+      const actionGas =
+        action && action.functionCall ? Big(action.functionCall.gas) : Big(0);
+      const newTotalGas = currentTotalGas.add(actionGas);
+      if (
+        receiverId !== currentReceiverId ||
+        newTotalGas.gt(MaxGasPerTransaction)
+      ) {
         if (currentReceiverId !== null) {
           transactions.push(
             nearAPI.transactions.createTransaction(
@@ -167,7 +175,10 @@ async function _initNear() {
           );
           actions = [];
         }
+        currentTotalGas = actionGas;
         currentReceiverId = receiverId;
+      } else {
+        currentTotalGas = newTotalGas;
       }
       actions.push(action);
     });
