@@ -146,7 +146,7 @@ export default function Subscription(props) {
   const subscribeToSale = async (e) => {
     e.preventDefault();
     setLoading(true);
-    const amount = toTokenBalance(inToken, extraDeposit);
+    const amount = extraDepositBalance;
     const actions = [];
 
     let referralId = getCurrentReferralId(sale.saleId) || undefined;
