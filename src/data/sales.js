@@ -115,13 +115,11 @@ export const useSales = singletonHook(defaultSales, () => {
 
     fetchSales()
       .then((sales) => {
-        setSales((prev) => {
-          return {
-            loading: false,
-            sales: prev.sales.concat(sales),
-            fetchSale,
-            refreshSale,
-          };
+        setSales({
+          loading: false,
+          sales,
+          fetchSale,
+          refreshSale,
         });
       })
       .catch(() => {
