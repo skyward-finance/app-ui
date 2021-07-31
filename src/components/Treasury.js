@@ -193,24 +193,21 @@ function Account(props) {
       }
     }
 
-    let unwrapNearAction = null;
-
-    // TODO: Break out transactions
     // Withdrawing
     receiveBalances.forEach(([tokenAccountId, balance]) => {
-      actions.push([
-        NearConfig.contractName,
-        nearAPI.transactions.functionCall(
-          "withdraw_token",
-          {
-            token_account_id: tokenAccountId,
-          },
-          TGas.mul(40).toFixed(0),
-          0
-        ),
-      ]);
       if (tokenAccountId === NearConfig.wrapNearAccountId) {
-        unwrapNearAction = [
+        actions.push([
+          NearConfig.contractName,
+          nearAPI.transactions.functionCall(
+            "withdraw_token",
+            {
+              token_account_id: tokenAccountId,
+            },
+            TGas.mul(40).toFixed(0),
+            0
+          ),
+        ]);
+        actions.push([
           tokenAccountId,
           nearAPI.transactions.functionCall(
             "near_withdraw",
@@ -220,13 +217,9 @@ function Account(props) {
             TGas.mul(10).toFixed(0),
             1
           ),
-        ];
+        ]);
       }
     });
-
-    if (unwrapNearAction) {
-      actions.push(unwrapNearAction);
-    }
 
     await account.near.sendTransactions(actions);
   };

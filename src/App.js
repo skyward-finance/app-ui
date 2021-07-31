@@ -7,10 +7,12 @@ import Logo from "./images/logo_horizontal_brand.png";
 import SalesPage from "./pages/SalesPage";
 import { BrowserRouter as Router, Link, Route, Switch } from "react-router-dom";
 import AccountPage from "./pages/AccountPage";
-import { IsMainnet, NearConfig, useNear } from "./data/near";
+import { IsMainnet, NearConfig, TGas, useNear } from "./data/near";
 import SalePage from "./pages/SalePage";
 import TreasuryPage from "./pages/TreasuryPage";
 import CreateSalePage from "./pages/CreateSalePage";
+import { useAccount } from "./data/account";
+import { isTokenRegistered } from "./data/token";
 
 function App(props) {
   const [connected, setConnected] = useState(false);
@@ -64,6 +66,44 @@ function App(props) {
     signedIn,
     connected,
   };
+
+  const account = useAccount();
+
+  useEffect(() => {
+    if (account && !account.loading && account.accountId) {
+      const withdrawInternalBalances = async () => {
+        let result = false;
+        const balances = Object.entries(account.balances);
+        for (let i = 0; i < balances.length; ++i) {
+          const [tokenAccountId, balance] = balances[i];
+          if (
+            balance.gt(0) &&
+            tokenAccountId !== NearConfig.wrapNearAccountId &&
+            (await isTokenRegistered(
+              account,
+              tokenAccountId,
+              account.accountId
+            ))
+          ) {
+            await account.near.contract.withdraw_token(
+              {
+                token_account_id: tokenAccountId,
+              },
+              TGas.mul(40).toFixed(0),
+              0
+            );
+            result = true;
+          }
+        }
+        return result;
+      };
+      withdrawInternalBalances().then((res) => {
+        if (res) {
+          account.refresh();
+        }
+      });
+    }
+  }, [account]);
 
   const header = !connected ? (
     <div>
