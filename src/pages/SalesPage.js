@@ -19,6 +19,8 @@ function SalesPage(props) {
     (sale) => !sale.ended() && (sale.started() || !sale.farAhead())
   );
   const upcomingSales = allUpcomingSales.filter((sale) => sale.farAhead());
+  // Reverse sort, but keep order stable for same time
+  sortedSales.sort((a, b) => b.endDate - a.endDate);
   const endedSales = sortedSales.filter((sale) => sale.ended());
 
   const saleList = (sale) => {
