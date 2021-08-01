@@ -38,7 +38,14 @@ export const getTokenBalancesFetcher = async (
 export const useTokenBalances = (tokenAccountId) => {
   const account = useAccount();
   const token = useToken(tokenAccountId);
+  const [currentTokenAccountId, setCurrentTokenAccountId] = useState(
+    tokenAccountId
+  );
   const [tokenBalance, setTokenBalance] = useState(null);
+  if (currentTokenAccountId !== tokenAccountId) {
+    setCurrentTokenAccountId(tokenAccountId);
+    setTokenBalance(null);
+  }
 
   useEffect(() => {
     if (account.accountId && token && token.metadata && tokenBalance === null) {
