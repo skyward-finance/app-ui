@@ -7,6 +7,7 @@ import { useToken } from "../data/token";
 import Big from "big.js";
 import {
   fromTokenBalance,
+  isoDate,
   Loading,
   skywardUrl,
   tokenStorageDeposit,
@@ -65,13 +66,23 @@ export default function CreatSale(props) {
   const [dateRange, setDateRange] = useState([null, null]);
   const [startDate, endDate] = dateRange;
 
-  const startTime = startDate
-    ? startDate.getTime()
-    : new Date().getTime() + OneWeek;
+  const minDate = new Date(
+    Math.trunc(new Date().getTime() / OneDay + 8) * OneDay
+  );
+
+  const timezoneOffset = new Date().getTimezoneOffset() * 60 * 1000;
+
+  const toLocalTimezone = (d) =>
+    d ? new Date(d.getTime() + timezoneOffset) : null;
+  const toUTCTimezone = (d) =>
+    d ? new Date(d.getTime() - timezoneOffset) : null;
+
+  const startTime = startDate ? startDate.getTime() : minDate.getTime();
   const duration =
     endDate && startDate
       ? endDate.getTime() - startDate.getTime() + OneDay
       : OneWeek;
+  const numDays = Math.trunc(duration / OneDay);
   const endTime = startTime + duration;
 
   const sale = addSaleMethods({
@@ -98,10 +109,6 @@ export default function CreatSale(props) {
     remainingDuration: endTime - new Date().getTime(),
     currentDate: new Date(),
   });
-
-  const minDate = new Date(
-    Math.trunc(new Date().getTime() / OneDay + 8) * OneDay
-  );
 
   const createSale = async (e) => {
     e.preventDefault();
@@ -285,42 +292,54 @@ export default function CreatSale(props) {
               />
             </div>
           )}
-          {outAmountHuman && (
-            <div className="mb-3">
-              <label htmlFor="referral-fee-range" className="form-label">
-                Referral fee {referralBpt / 100}%{" "}
-                <span className="text-muted">
-                  (the referral fee will come from the output amount)
-                </span>
-              </label>
-              <input
-                type="range"
-                className="form-range"
-                min="0"
-                max="500"
-                step="1"
-                id="referral-fee-range"
-                value={referralBpt}
-                onChange={(e) => setReferralBpt(e.target.value)}
-              />
-            </div>
-          )}
-          {outAmountHuman && (
-            <div className="mb-3">
-              <label htmlFor="sale-dates-picker">
-                Sale start date and end date{" "}
-                <span className="text-muted">(inclusive)</span>
-              </label>
-              <DatePicker
-                id="sale-dates-picker"
-                selectsRange={true}
-                minDate={minDate}
-                startDate={startDate}
-                endDate={endDate}
-                onChange={setDateRange}
-                inline
-              />
-            </div>
+          {outAmount.gt(0) && (
+            <>
+              <div className="mb-3">
+                <label htmlFor="referral-fee-range" className="form-label">
+                  Referral fee <b>{referralBpt / 100}%</b>{" "}
+                  <span className="text-muted">
+                    (the referral fee will come from the output amount)
+                  </span>
+                </label>
+                <input
+                  type="range"
+                  className="form-range"
+                  min="0"
+                  max="500"
+                  step="1"
+                  id="referral-fee-range"
+                  value={referralBpt}
+                  onChange={(e) => setReferralBpt(parseInt(e.target.value))}
+                />
+              </div>
+              <div className="mb-3">
+                <label htmlFor="sale-dates-picker" className="mb-2">
+                  Sale starts on <b>{isoDate(startTime)}</b>{" "}
+                  <span className="text-muted">at 00:00 UTC</span> and ends on{" "}
+                  <b>{isoDate(endTime)}</b>{" "}
+                  <span className="text-muted">at 00:00 UTC</span> for the
+                  duration of{" "}
+                  <b>
+                    {numDays} day
+                    {numDays > 1 ? "s " : " "}
+                  </b>
+                </label>
+                <DatePicker
+                  id="sale-dates-picker"
+                  selectsRange={true}
+                  minDate={toLocalTimezone(minDate)}
+                  startDate={toLocalTimezone(startDate)}
+                  endDate={toLocalTimezone(endDate)}
+                  onChange={([startDate, endDate]) =>
+                    setDateRange([
+                      toUTCTimezone(startDate),
+                      toUTCTimezone(endDate),
+                    ])
+                  }
+                  inline
+                />
+              </div>
+            </>
           )}
           {startDate && endDate && (
             <div className="mb-3">

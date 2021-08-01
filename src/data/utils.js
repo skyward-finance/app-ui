@@ -183,3 +183,6 @@ export const tokenStorageDeposit = async (tokenAccountId) => {
     ? BridgeTokenStorageDeposit
     : TokenStorageDeposit;
 };
+
+export const isoDate = (d) =>
+  d ? new Date(d).toISOString().substring(0, 10) : "";
