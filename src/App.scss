@@ -54,6 +54,12 @@ body, html {
   }
 }
 
+.btn.btn-success {
+  .text-secondary {
+    color: #fff !important;
+  }
+}
+
 .bg-simple-gradient {
   background: $simple-gradient;
 }
