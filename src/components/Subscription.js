@@ -11,6 +11,7 @@ import {
   fromTokenBalance,
   getCurrentReferralId,
   isBridgeToken,
+  isSaleWhitelisted,
   Loading,
   tokenStorageDeposit,
   toTokenBalance,
@@ -32,6 +33,7 @@ import TokenBalance from "./TokenBalance";
 import { useSales } from "../data/sales";
 import { useTokenBalances } from "../data/tokenBalances";
 import { BalanceType } from "./AccountBalance";
+import { useRefFinance } from "../data/refFinance";
 
 const DepositMode = "Deposit";
 const WithdrawMode = "Withdrawal";
@@ -55,6 +57,8 @@ export default function Subscription(props) {
 
   const account = useAccount();
   const inToken = useToken(sale.inTokenAccountId);
+
+  const refFinance = useRefFinance();
 
   const subscription = sale.subscription || {
     claimedOutBalance: sale.outTokens.map(() => Big(0)),
@@ -451,6 +455,21 @@ export default function Subscription(props) {
     (!sale.ended() || !subscription.noSub) && (
       <div className={"card mb-2"}>
         <div className="card-body">
+          {!isSaleWhitelisted(sale, refFinance) && (
+            <div className="alert alert-danger">
+              <b>
+                Danger! This sale contains tokens not whitelisted by REF
+                Finance.
+              </b>
+              <br />
+              Investing in this sale may result in receiving illiquid tokens
+              and/or complete lose of funds.
+              <br />
+              Please do your own research before you deposit funds into this
+              sale.
+              <br />
+            </div>
+          )}
           {sale.farAhead() && (
             <div className="alert alert-warning">
               <b>Warning! This sale will begin in more than one week!</b>

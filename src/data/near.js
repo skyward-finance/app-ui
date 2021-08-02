@@ -18,11 +18,11 @@ export const randomPublicKey = nearAPI.utils.PublicKey.from(
   "ed25519:8fWHD35Rjd78yeowShh9GwhRudRtLLsGCRjZtgPjAtw9"
 );
 
-export const noInternetMode = window.location.hostname === "localhost";
+const isLocalhost = window.location.hostname === "localhost";
+export const noInternetMode = isLocalhost;
 
-export const IsMainnet = !!window.location.hostname.match(
-  /app\d?\.skyward\.finance/
-);
+export const IsMainnet =
+  isLocalhost || !!window.location.hostname.match(/app\d?\.skyward\.finance/);
 // const TestnetContract = "dev-1624326477618-30908433776884";
 const TestnetContract = "skyward.testnet";
 const TestNearConfig = {

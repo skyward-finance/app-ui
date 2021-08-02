@@ -186,3 +186,20 @@ export const tokenStorageDeposit = async (tokenAccountId) => {
 
 export const isoDate = (d) =>
   d ? new Date(d).toISOString().substring(0, 10) : "";
+
+export const isSaleWhitelisted = (sale, refFinance) => {
+  if (refFinance && refFinance.whitelistedTokens) {
+    if (!refFinance.whitelistedTokens.has(sale.inTokenAccountId)) {
+      return false;
+    }
+    if (
+      sale.outTokens.some(
+        (outToken) => !refFinance.whitelistedTokens.has(outToken.tokenAccountId)
+      )
+    ) {
+      return false;
+    }
+    return true;
+  }
+  return false;
+};

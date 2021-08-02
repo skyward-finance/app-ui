@@ -3,13 +3,22 @@ import React, { useState } from "react";
 import { useSales } from "../data/sales";
 import uuid from "react-uuid";
 import SalePreview from "../components/SalePreview";
-import { Loading } from "../data/utils";
+import { isSaleWhitelisted, Loading } from "../data/utils";
+import { useRefFinance } from "../data/refFinance";
 
 function SalesPage(props) {
   const [gkey] = useState(uuid());
   const sales = useSales();
 
-  const sortedSales = [...sales.sales];
+  const [whitelistedOnly, setWhitelistedOnly] = useState(true);
+
+  const refFinance = useRefFinance();
+  let sortedSales = [...sales.sales];
+  if (refFinance && refFinance.whitelistedTokens && whitelistedOnly) {
+    sortedSales = sortedSales.filter((sale) =>
+      isSaleWhitelisted(sale, refFinance)
+    );
+  }
   sortedSales.sort((a, b) => a.endDate - b.endDate);
 
   const allUpcomingSales = sortedSales.filter(
@@ -37,24 +46,54 @@ function SalesPage(props) {
   return (
     <div>
       <div className="container">
-        {sales.loading ? (
+        {sales.loading || !refFinance ? (
           <div className="row justify-content-md-center mb-3 sales-page">
             <h2 className="primary-header">Loading {Loading}</h2>
           </div>
         ) : (
-          allSales.map(([title, sales], i) => {
-            return (
-              sales.length > 0 && (
-                <div
-                  className="row justify-content-md-center mb-3 sales-page"
-                  key={`${gkey}-list-${i}`}
-                >
-                  <h2 className="primary-header">{title}</h2>
-                  {sales.map(saleList)}
+          <>
+            <div className="row mb-3">
+              <div className="card">
+                <div className="card-body">
+                  <div className="form-check">
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      id="whitelistedOnly"
+                      checked={whitelistedOnly}
+                      onChange={(e) => {
+                        setWhitelistedOnly(e.target.checked);
+                      }}
+                    />
+                    <label
+                      className="form-check-label"
+                      htmlFor="whitelistedOnly"
+                    >
+                      Display only whitelisted sales
+                      <span className="text-muted">
+                        {" "}
+                        (if checked, only sales with tokens listed by Ref
+                        Finance will be displayed)
+                      </span>
+                    </label>
+                  </div>
                 </div>
-              )
-            );
-          })
+              </div>
+            </div>
+            {allSales.map(([title, sales], i) => {
+              return (
+                sales.length > 0 && (
+                  <div
+                    className="row justify-content-md-center mb-3 sales-page"
+                    key={`${gkey}-list-${i}`}
+                  >
+                    <h2 className="primary-header">{title}</h2>
+                    {sales.map(saleList)}
+                  </div>
+                )
+              );
+            })}
+          </>
         )}
       </div>
     </div>

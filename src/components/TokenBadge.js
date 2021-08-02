@@ -14,12 +14,9 @@ export default function TokenBadge(props) {
       <div className="token-name text-truncate" title={name}>
         {name}
       </div>
-      <div>
+      <div title={tokenAccountId}>
         {icon && <img src={icon} alt="Token Icon" />}
-        <span
-          className="font-monospace align-middle text-truncate"
-          title={symbol}
-        >
+        <span className="font-monospace align-middle text-truncate">
           {symbol}
         </span>
       </div>
