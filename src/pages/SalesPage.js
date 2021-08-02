@@ -47,7 +47,7 @@ function SalesPage(props) {
     <div>
       <div className="container">
         {sales.loading || !refFinance ? (
-          <div className="row justify-content-md-center mb-3 sales-page">
+          <div className="row justify-content-md-evenly mb-3 sales-page">
             <h2 className="primary-header">Loading {Loading}</h2>
           </div>
         ) : (
@@ -84,7 +84,7 @@ function SalesPage(props) {
               return (
                 sales.length > 0 && (
                   <div
-                    className="row justify-content-md-center mb-3 sales-page"
+                    className="row justify-content-md-evenly mb-3 sales-page"
                     key={`${gkey}-list-${i}`}
                   >
                     <h2 className="primary-header">{title}</h2>

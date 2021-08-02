@@ -9,7 +9,7 @@ import SaleRate from "./SaleRate";
 export default function SalePreview(props) {
   const sale = props.sale;
   return (
-    <div className="sale-preview card m-2">
+    <div className="sale-preview card mb-3">
       <div className="card-body">
         <Link
           to={sale.saleId >= 0 ? `/sale/${sale.saleId}` : "#"}
