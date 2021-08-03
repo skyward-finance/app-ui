@@ -458,7 +458,7 @@ export default function Subscription(props) {
           {!isSaleWhitelisted(sale, refFinance) && (
             <div className="alert alert-danger">
               <b>
-                Danger! This sale contains tokens not whitelisted by REF
+                Danger! This listing contains tokens not whitelisted by REF
                 Finance.
               </b>
               <br />
@@ -466,7 +466,7 @@ export default function Subscription(props) {
               and/or complete lose of funds.
               <br />
               Please do your own research before you deposit funds into this
-              sale.
+              listing.
               <br />
             </div>
           )}

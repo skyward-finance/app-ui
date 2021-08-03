@@ -105,7 +105,7 @@ export default function PriceHistory(props) {
     const datasets = [
       {
         data: [],
-        label: `Before sale ${outToken.metadata.symbol} / ${inToken.metadata.symbol}`,
+        label: `Before sale started (no tokens sold) ${outToken.metadata.symbol} / ${inToken.metadata.symbol}`,
         fill: false,
         backgroundColor: "#bbbbbb",
         borderColor: "#bbbbbb22",

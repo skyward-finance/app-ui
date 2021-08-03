@@ -236,9 +236,9 @@ export default function CreatSale(props) {
     <>
       <div className="card mb-2">
         <div className="card-body">
-          <h2 className="primary-header">Create a new sale</h2>
+          <h2 className="primary-header">Create a new Listing</h2>
           <div className="mb-3">
-            <label htmlFor="sale-title-input">Sale title</label>
+            <label htmlFor="sale-title-input">Listing title</label>
             <input
               id="sale-title-input"
               className="form-control"
@@ -250,9 +250,7 @@ export default function CreatSale(props) {
           <div className="mb-3">
             <label htmlFor="input-token-select">
               Input token{" "}
-              <span className="text-muted">
-                (a token you want to receive from sale)
-              </span>
+              <span className="text-muted">(a token you want to receive)</span>
             </label>
             <TokenSelect
               id="input-token-select"
@@ -264,9 +262,7 @@ export default function CreatSale(props) {
             <div className="mb-3">
               <label htmlFor="output-token-select">
                 Output token{" "}
-                <span className="text-muted">
-                  (a token you want to offer for sale)
-                </span>
+                <span className="text-muted">(a token you want to offer)</span>
               </label>
               <TokenSelect
                 id="output-token-select"
@@ -348,7 +344,7 @@ export default function CreatSale(props) {
                 data-bs-toggle="modal"
                 data-bs-target="#createSaleModal"
               >
-                Preview Sale
+                Preview Listing
               </button>
             </div>
           )}
@@ -367,7 +363,7 @@ export default function CreatSale(props) {
           <div className="modal-content">
             <div className="modal-header">
               <h5 className="modal-title" id="createSaleModalLabel">
-                Create sale for 10 NEAR
+                Create a listing for 10 NEAR
               </h5>
               <button
                 type="button"
@@ -391,7 +387,7 @@ export default function CreatSale(props) {
                 onClick={createSale}
               >
                 {loading && Loading}
-                Create sale
+                Create a listing
               </button>
               <button
                 type="button"
@@ -405,7 +401,7 @@ export default function CreatSale(props) {
           </div>
         </div>
       </div>
-      <h2 className="primary-header">Sale preview</h2>
+      <h2 className="primary-header">Listing preview</h2>
       <div className="row justify-content-md-center">
         <SalePreview sale={sale} />
       </div>

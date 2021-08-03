@@ -165,7 +165,7 @@ function App(props) {
               <ul className="navbar-nav me-auto mb-2 mb-lg-0">
                 <li className="nav-item">
                   <Link className="nav-link" aria-current="page" to="/">
-                    Sales
+                    Listings
                   </Link>
                 </li>
                 {signedIn && (
@@ -195,7 +195,7 @@ function App(props) {
                       aria-current="page"
                       to={`/create_sale/`}
                     >
-                      Create Sale
+                      Create a Listing
                     </Link>
                   </li>
                 )}

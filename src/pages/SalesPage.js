@@ -38,9 +38,9 @@ function SalesPage(props) {
   };
 
   const allSales = [
-    ["Current sales or starting soon", currentSalesAndSoon],
-    ["Upcoming sales", upcomingSales],
-    ["Ended sales", endedSales],
+    ["Ongoing listings or starting soon", currentSalesAndSoon],
+    ["Upcoming listings", upcomingSales],
+    ["Completed listings", endedSales],
   ];
 
   return (
@@ -69,11 +69,11 @@ function SalesPage(props) {
                       className="form-check-label"
                       htmlFor="whitelistedOnly"
                     >
-                      Display only whitelisted sales
+                      Display only whitelisted listings
                       <span className="text-muted">
                         {" "}
-                        (if checked, only sales with tokens listed by Ref
-                        Finance will be displayed)
+                        (if checked, only listings with tokens whitelisted by
+                        Ref Finance will be displayed)
                       </span>
                     </label>
                   </div>
