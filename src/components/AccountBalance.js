@@ -22,7 +22,6 @@ export function AccountBalance(props) {
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [balances, setBalances] = useState([]);
-  const [withdrawableBalance, setWithdrawableBalance] = useState(Big(0));
 
   const tokenAccountId = props.tokenAccountId;
   const account = useAccount();
@@ -40,25 +39,26 @@ export function AccountBalance(props) {
         }
       });
       setBalances(balances);
-      setWithdrawableBalance(
-        (tokenBalances[BalanceType.Internal] || Big(0)).add(
-          tokenBalances[BalanceType.Ref] || Big(0)
-        )
-      );
       if (onFetchedBalances) {
         onFetchedBalances(tokenBalances);
       }
     }
   }, [tokenBalances, onFetchedBalances]);
 
-  const clickable = props.clickable && withdrawableBalance.gt(0);
+  const internalBalance =
+    (tokenBalances && tokenBalances[BalanceType.Internal]) || Big(0);
+  const refBalance =
+    (tokenBalances && tokenBalances[BalanceType.Ref]) || Big(0);
+  const tokenBalance =
+    (tokenBalances && tokenBalances[BalanceType.Wallet]) || Big(0);
 
-  const withdraw = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+  const canUnwrap =
+    tokenAccountId === NearConfig.wrapNearAccountId && tokenBalance.gt(0);
 
-    const actions = [];
+  const clickable =
+    props.clickable && (internalBalance.gt(0) || refBalance.gt(0) || canUnwrap);
 
+  const registerAction = async (actions) => {
     if (!(await token.contract.isRegistered(account, account.accountId))) {
       actions.push([
         tokenAccountId,
@@ -73,45 +73,9 @@ export function AccountBalance(props) {
         ),
       ]);
     }
+  };
 
-    let isInternal = false;
-    if (
-      BalanceType.Internal in tokenBalances &&
-      tokenBalances[BalanceType.Internal].gt(0)
-    ) {
-      isInternal = true;
-      actions.push([
-        NearConfig.contractName,
-        nearAPI.transactions.functionCall(
-          "withdraw_token",
-          {
-            token_account_id: tokenAccountId,
-          },
-          TGas.mul(40).toFixed(0),
-          0
-        ),
-      ]);
-    }
-
-    if (
-      BalanceType.Ref in tokenBalances &&
-      tokenBalances[BalanceType.Ref].gt(0)
-    ) {
-      actions.push([
-        NearConfig.refContractName,
-        nearAPI.transactions.functionCall(
-          "withdraw",
-          {
-            token_id: tokenAccountId,
-            amount: tokenBalances[BalanceType.Ref].toFixed(0),
-            unregister: false,
-          },
-          TGas.mul(50).toFixed(0),
-          1
-        ),
-      ]);
-    }
-
+  const unwrapNearAction = async (actions, balance) => {
     if (tokenAccountId === NearConfig.wrapNearAccountId) {
       const tokenBalance = await token.contract.balanceOf(
         account,
@@ -122,15 +86,37 @@ export function AccountBalance(props) {
         nearAPI.transactions.functionCall(
           "near_withdraw",
           {
-            amount: tokenBalance.add(withdrawableBalance).toFixed(0),
+            amount: tokenBalance.add(balance).toFixed(0),
           },
           TGas.mul(10).toFixed(0),
           1
         ),
       ]);
     }
+  };
 
-    if (actions.length === 1 && isInternal) {
+  const withdrawInternal = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    const actions = [];
+    await registerAction(actions);
+
+    actions.push([
+      NearConfig.contractName,
+      nearAPI.transactions.functionCall(
+        "withdraw_token",
+        {
+          token_account_id: tokenAccountId,
+        },
+        TGas.mul(40).toFixed(0),
+        0
+      ),
+    ]);
+
+    await unwrapNearAction(actions, internalBalance);
+
+    if (actions.length === 1) {
       // simple
       await account.near.contract.withdraw_token(
         {
@@ -148,6 +134,42 @@ export function AccountBalance(props) {
     setLoading(false);
   };
 
+  const withdrawFromRef = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    const actions = [];
+    await registerAction(actions);
+
+    actions.push([
+      NearConfig.refContractName,
+      nearAPI.transactions.functionCall(
+        "withdraw",
+        {
+          token_id: tokenAccountId,
+          amount: refBalance.toFixed(0),
+          unregister: false,
+        },
+        TGas.mul(50).toFixed(0),
+        1
+      ),
+    ]);
+
+    await unwrapNearAction(actions, refBalance);
+    await account.near.sendTransactions(actions);
+  };
+
+  const unwrapNear = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    const actions = [];
+    await registerAction(actions);
+
+    await unwrapNearAction(actions, Big(0));
+    await account.near.sendTransactions(actions);
+  };
+
   return (
     <div>
       <div
@@ -157,20 +179,53 @@ export function AccountBalance(props) {
         <TokenAndBalance tokenAccountId={tokenAccountId} balances={balances} />
       </div>
       {expanded && (
-        <div className="mb-2">
-          <button
-            className="btn btn-primary m-1"
-            disabled={withdrawableBalance.eq(0) || loading}
-            onClick={(e) => withdraw(e)}
-          >
-            {loading && Loading}
-            Withdraw{" "}
-            <TokenBalance
-              tokenAccountId={tokenAccountId}
-              balance={withdrawableBalance}
-            />{" "}
-            <TokenSymbol tokenAccountId={tokenAccountId} /> to wallet
-          </button>
+        <div className="mb-2 flex-buttons">
+          {internalBalance.gt(0) && (
+            <button
+              className="btn btn-primary m-1"
+              disabled={internalBalance.eq(0) || loading}
+              onClick={(e) => withdrawInternal(e)}
+            >
+              {loading && Loading}
+              Withdraw{" "}
+              <TokenBalance
+                tokenAccountId={tokenAccountId}
+                balance={internalBalance}
+              />{" "}
+              <TokenSymbol tokenAccountId={tokenAccountId} /> to wallet
+            </button>
+          )}
+          {refBalance.gt(0) && (
+            <button
+              className="btn btn-primary m-1"
+              disabled={refBalance.eq(0) || loading}
+              onClick={(e) => withdrawFromRef(e)}
+            >
+              {loading && Loading}
+              Withdraw{" "}
+              <TokenBalance
+                tokenAccountId={tokenAccountId}
+                balance={refBalance}
+              />{" "}
+              <TokenSymbol tokenAccountId={tokenAccountId} /> from REF Finance
+              to wallet
+            </button>
+          )}
+          {canUnwrap && (
+            <button
+              className="btn btn-primary m-1"
+              disabled={!canUnwrap || loading}
+              onClick={(e) => unwrapNear(e)}
+            >
+              {loading && Loading}
+              Unwrap{" "}
+              <TokenBalance
+                tokenAccountId={tokenAccountId}
+                balance={tokenBalance}
+              />{" "}
+              <TokenSymbol tokenAccountId={tokenAccountId} />
+            </button>
+          )}
         </div>
       )}
     </div>

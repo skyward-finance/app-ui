@@ -41,22 +41,16 @@ body, html {
   color: #eee;
   background: $simple-gradient;
 
-  .text-secondary {
-    color: #bbb !important;
-  }
-
   &:hover, &:active, &:focus, &:disabled {
     background: $primary-gradient;
     color: #fff;
-    .text-secondary {
-      color: #ccc !important;
-    }
   }
 }
 
-.btn.btn-success {
+.btn {
   .text-secondary {
-    color: #fff !important;
+    color: inherit !important;
+    font-weight: normal !important;
   }
 }
 

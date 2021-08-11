@@ -212,7 +212,7 @@ function Account(props) {
           nearAPI.transactions.functionCall(
             "near_withdraw",
             {
-              amount: balance.toFixed(0),
+              amount: balance.mul(0.9999).round(0, 0).toFixed(0),
             },
             TGas.mul(10).toFixed(0),
             1
