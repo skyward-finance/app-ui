@@ -21,7 +21,12 @@ export default function TokenBalance(props) {
   return (
     <span
       className={`font-monospace fw-bold ${clickable ? "pointer" : ""}`}
-      onClick={() => clickable && setShowUsd(!showUsd)}
+      onClick={(e) => {
+        if (clickable) {
+          e.stopPropagation();
+          setShowUsd(!showUsd);
+        }
+      }}
     >
       {showUsd && <span className="text-secondary">~$</span>}
       <MutedDecimals
