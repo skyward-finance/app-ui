@@ -14,12 +14,7 @@ export default function TokenBalance(props) {
   const balance = props.balance;
   const token = useToken(tokenAccountId);
   const refFinance = useRefFinance();
-  const usdBalance = computeUsdBalance(
-    token,
-    refFinance,
-    tokenAccountId,
-    balance
-  );
+  const usdBalance = computeUsdBalance(refFinance, tokenAccountId, balance);
 
   const clickable = props.clickable && usdBalance;
 
@@ -32,7 +27,7 @@ export default function TokenBalance(props) {
       <MutedDecimals
         value={
           showUsd
-            ? bigToString(fromTokenBalance(token, usdBalance))
+            ? bigToString(usdBalance)
             : bigToString(fromTokenBalance(token, balance))
         }
       />

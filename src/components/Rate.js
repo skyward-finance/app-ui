@@ -6,6 +6,7 @@ import {
   bigToString,
   computeUsdBalance,
   fromTokenBalance,
+  toTokenBalance,
 } from "../data/utils";
 import { useToken } from "../data/token";
 import { useRefFinance } from "../data/refFinance";
@@ -29,10 +30,9 @@ export default function Rate(props) {
 
   const refFinance = useRefFinance();
   const usdBalance = computeUsdBalance(
-    inToken,
     refFinance,
     inTokenAccountId,
-    inversePrice
+    toTokenBalance(inToken, inversePrice)
   );
 
   const numViews = usdBalance ? 3 : 2;

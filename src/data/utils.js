@@ -113,13 +113,13 @@ export const dateToString = (d) => {
 };
 
 export const fromTokenBalance = (token, balance) => {
-  return !token || token.invalidAccount || token.notFound
+  return !token || token.invalidAccount || token.notFound || !balance
     ? balance
     : balance.div(Big(10).pow(token.metadata.decimals));
 };
 
 export const toTokenBalance = (token, balance) => {
-  return !token || token.invalidAccount || token.notFound
+  return !token || token.invalidAccount || token.notFound || !balance
     ? balance
     : balance.mul(Big(10).pow(token.metadata.decimals));
 };
@@ -149,26 +149,20 @@ export const getCurrentReferralId = (saleId) => {
   return null;
 };
 
-export const computeUsdBalance = (
-  token,
-  refFinance,
-  tokenAccountId,
-  balance
-) => {
+export const computeUsdBalance = (refFinance, tokenAccountId, balance) => {
   if (refFinance && !refFinance.loading && balance) {
     if (tokenAccountId === NearConfig.wrapNearAccountId) {
-      return balance.mul(refFinance.nearPrice);
+      return balance.div(OneNear).mul(refFinance.nearPrice);
     } else if (
       tokenAccountId in refFinance.prices &&
       refFinance.nearPrice.gt(0)
     ) {
       const p = refFinance.prices[tokenAccountId];
-      if (token && token.metadata) {
-        const ot = p.totalOther
-          .mul(OneNear)
-          .div(Big(10).pow(token.metadata.decimals));
-        return balance.mul(p.totalNear).div(ot).mul(refFinance.nearPrice);
-      }
+      return balance
+        .mul(p.totalNear)
+        .div(p.totalOther)
+        .div(OneNear)
+        .mul(refFinance.nearPrice);
     }
   }
   return null;

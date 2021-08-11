@@ -1,11 +1,17 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import uuid from "react-uuid";
 import TokenAndBalance from "./TokenAndBalance";
 import { useTreasury } from "../data/treasury";
-import { NearConfig, SkywardRegisterStorageDeposit, TGas } from "../data/near";
+import {
+  MinUsdValue,
+  NearConfig,
+  SkywardRegisterStorageDeposit,
+  TGas,
+} from "../data/near";
 import {
   bigMin,
   bigToString,
+  computeUsdBalance,
   fromTokenBalance,
   Loading,
   OneSkyward,
@@ -19,11 +25,12 @@ import Big from "big.js";
 import { isTokenRegistered, useToken } from "../data/token";
 import TokenBalance from "./TokenBalance";
 import * as nearAPI from "near-api-js";
+import { useRefFinance } from "../data/refFinance";
 
 const DefaultMode = "DefaultMode";
 const RedeemMode = "RedeemMode";
 
-function Account(props) {
+export default function Treasury(props) {
   const [mode, setMode] = useState(DefaultMode);
   const [loading, setLoading] = useState(false);
   const [gkey] = useState(uuid());
@@ -33,6 +40,7 @@ function Account(props) {
   const treasury = useTreasury();
   const account = useAccount();
   const skywardToken = useToken(NearConfig.skywardTokenAccountId);
+  const refFinance = useRefFinance();
 
   let availableSkywardBalance = Big(0);
 
@@ -66,46 +74,88 @@ function Account(props) {
       )
     : Big(0);
 
+  const [selectedTokens, setSelectedTokens] = useState(null);
+
+  useEffect(() => {
+    if (
+      selectedTokens === null &&
+      account &&
+      account.accountId &&
+      !account.loading &&
+      refFinance &&
+      !refFinance.loading
+    ) {
+      setSelectedTokens(
+        Object.assign(
+          { [NearConfig.wrapNearAccountId]: true },
+          account.balances
+        )
+      );
+    }
+  }, [account, refFinance, selectedTokens]);
+
   const receiveBalances = [];
 
   const balances =
     treasury && !treasury.loading
-      ? Object.entries(treasury.balances).map(([tokenAccountId, balance]) => {
-          const key = `${gkey}-treasuryBalance-${tokenAccountId}`;
-          const youReceive = treasury.skywardCirculatingSupply.gt(0)
-            ? skywardBurnAmount
-                .mul(balance)
-                .div(treasury.skywardCirculatingSupply)
-                .round(0, 0)
-            : Big(0);
-          if (youReceive.gt(0)) {
-            receiveBalances.push([tokenAccountId, youReceive]);
-          }
-          const balances = skywardBurnAmount.gt(0)
-            ? [
-                ["YOU WILL RECEIVE ", youReceive],
-                ["TREASURY ", balance],
-              ]
-            : [
-                [
-                  "PER SKYWARD ",
-                  treasury.skywardCirculatingSupply.gt(0)
-                    ? balance
-                        .mul(OneSkyward)
-                        .div(treasury.skywardCirculatingSupply)
-                    : Big(0),
-                ],
-                ["TOTAL ", balance],
-              ];
-          return (
-            <TokenAndBalance
-              key={key}
-              tokenAccountId={tokenAccountId}
-              balances={balances}
-            />
-          );
-        })
+      ? Object.entries(treasury.balances)
+          .map(([tokenAccountId, balance]) => {
+            let youReceive = treasury.skywardCirculatingSupply.gt(0)
+              ? skywardBurnAmount
+                  .mul(balance)
+                  .div(treasury.skywardCirculatingSupply)
+                  .round(0, 0)
+              : Big(0);
+            const youReceiveUsd =
+              computeUsdBalance(refFinance, tokenAccountId, youReceive) ||
+              Big(0);
+            if (
+              (selectedTokens && tokenAccountId in selectedTokens) ||
+              youReceiveUsd.gt(MinUsdValue)
+            ) {
+              receiveBalances.push([tokenAccountId, youReceive]);
+            } else {
+              youReceive = Big(0);
+            }
+            const balances = (skywardBurnAmount.gt(0)
+              ? [
+                  ["YOU WILL RECEIVE ", youReceive],
+                  ["TREASURY ", balance],
+                ]
+              : [
+                  [
+                    "PER SKYWARD ",
+                    treasury.skywardCirculatingSupply.gt(0)
+                      ? balance
+                          .mul(OneSkyward)
+                          .div(treasury.skywardCirculatingSupply)
+                      : Big(0),
+                  ],
+                  ["TOTAL ", balance],
+                ]
+            ).filter(([label, balance]) => balance && balance.gt(0));
+            const usdValue =
+              computeUsdBalance(refFinance, tokenAccountId, balance) || Big(0);
+            return {
+              tokenAccountId,
+              balances,
+              balance,
+              usdValue,
+            };
+          })
+          .filter(({ balance }) => balance && balance.gt(0))
       : [];
+
+  const renderBalances = balances.map(({ tokenAccountId, balances }) => {
+    const key = `${gkey}-treasuryBalance-${tokenAccountId}`;
+    return (
+      <TokenAndBalance
+        key={key}
+        tokenAccountId={tokenAccountId}
+        balances={balances}
+      />
+    );
+  });
 
   const redeemSkyward = async (e) => {
     e.preventDefault();
@@ -403,11 +453,9 @@ function Account(props) {
           </div>
           <hr />
           <div>Treasury Balances</div>
-          <div>{balances}</div>
+          <div>{renderBalances}</div>
         </div>
       )}
     </div>
   );
 }
-
-export default Account;
