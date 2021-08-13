@@ -26,6 +26,7 @@ import { isTokenRegistered, useToken } from "../data/token";
 import TokenBalance from "./TokenBalance";
 import * as nearAPI from "near-api-js";
 import { useRefFinance } from "../data/refFinance";
+import MutedDecimals from "./MutedDecimals";
 
 const DefaultMode = "DefaultMode";
 const RedeemMode = "RedeemMode";
@@ -145,6 +146,16 @@ export default function Treasury(props) {
           })
           .filter(({ balance }) => balance && balance.gt(0))
       : [];
+
+  balances.sort((a, b) => b.usdValue.toNumber() - a.usdValue.toNumber());
+  const estimatedTreasuryUsdValue = balances.reduce(
+    (p, b) => p.add(b.usdValue),
+    Big(0)
+  );
+  const usdPerSkyward = toTokenBalance(
+    skywardToken,
+    estimatedTreasuryUsdValue.div(treasury.skywardCirculatingSupply || Big(1))
+  );
 
   const renderBalances = balances.map(({ tokenAccountId, balances }) => {
     const key = `${gkey}-treasuryBalance-${tokenAccountId}`;
@@ -289,10 +300,30 @@ export default function Treasury(props) {
               balances={[["", treasury.skywardCirculatingSupply]]}
             />
           </div>
+          {estimatedTreasuryUsdValue.gt(0) && (
+            <div>
+              Treasury total value locked:{" "}
+              <span className="font-monospace fw-bold">
+                <span className="text-secondary">~$</span>
+                <MutedDecimals value={bigToString(estimatedTreasuryUsdValue)} />
+              </span>
+            </div>
+          )}
+          {usdPerSkyward.gt(0) && (
+            <div>
+              Per{" "}
+              <TokenSymbol tokenAccountId={NearConfig.skywardTokenAccountId} />{" "}
+              token:{" "}
+              <span className="font-monospace fw-bold">
+                <span className="text-secondary">~$</span>
+                <MutedDecimals value={bigToString(usdPerSkyward)} />
+              </span>
+            </div>
+          )}
           <div>
             {account && account.accountId && mode === DefaultMode ? (
               <button
-                className="btn btn-outline-primary m-1"
+                className="btn btn-outline-primary mt-3"
                 disabled={loading}
                 onClick={() => setMode(RedeemMode)}
               >
@@ -303,7 +334,7 @@ export default function Treasury(props) {
               </button>
             ) : (
               mode === RedeemMode && (
-                <div>
+                <div className="mt-3">
                   <div
                     className="modal fade"
                     id="confirmRedeemModal"
