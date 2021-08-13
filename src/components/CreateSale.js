@@ -109,6 +109,7 @@ export default function CreatSale(props) {
     remainingDuration: endTime - new Date().getTime(),
     currentDate: new Date(),
   });
+  sale.scheduleRefresh = () => {};
 
   const createSale = async (e) => {
     e.preventDefault();
