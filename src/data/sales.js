@@ -72,18 +72,24 @@ export const useSales = singletonHook(defaultSales, () => {
     if (!account.near) {
       return;
     }
+    let scheduleRefresh = null;
+
+    const localMapSale = (sale) => {
+      sale = mapSale(sale);
+      sale.scheduleRefresh = (fast) => scheduleRefresh(sale, fast);
+      return sale;
+    };
+
     const fetchSale = async (saleId) => {
-      return mapSale(
+      return localMapSale(
         await account.near.contract.get_sale({
           sale_id: saleId,
           account_id: account.accountId || undefined,
         })
       );
     };
-    let setupAutoRefresh = null;
     const refreshSale = async (saleId) => {
       const sale = await fetchSale(saleId);
-      setupAutoRefresh(sale);
       setSales((prev) =>
         Object.assign({}, prev, {
           sales: Object.assign([], prev.sales, { [saleId]: sale }),
@@ -91,16 +97,19 @@ export const useSales = singletonHook(defaultSales, () => {
       );
     };
 
-    setupAutoRefresh = (sale) => {
-      clearInterval(saleRefreshTimers[sale.saleId]);
+    scheduleRefresh = (sale, fast) => {
+      clearTimeout(saleRefreshTimers[sale.saleId]);
+      saleRefreshTimers[sale.saleId] = null;
       if (!sale.ended()) {
-        saleRefreshTimers[sale.saleId] = setInterval(
+        saleRefreshTimers[sale.saleId] = setTimeout(
           async () => {
             if (!document.hidden) {
               await refreshSale(sale.saleId);
+            } else {
+              scheduleRefresh(sale, fast);
             }
           },
-          sale.started() ? 1000 : 30000
+          fast ? 1000 : sale.started() ? 5000 : 30000
         );
       }
     };
@@ -108,8 +117,7 @@ export const useSales = singletonHook(defaultSales, () => {
       const rawSales = await account.near.contract.get_sales({
         account_id: account.accountId || undefined,
       });
-      const sales = rawSales.map(mapSale);
-      sales.forEach(setupAutoRefresh);
+      const sales = rawSales.map(localMapSale);
       return sales;
     };
 

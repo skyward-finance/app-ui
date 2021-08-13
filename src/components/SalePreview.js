@@ -1,6 +1,6 @@
 import "./Sale.scss";
 import "./SalePreview.scss";
-import React from "react";
+import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import RemainingDuration from "./RemainingDuration";
 import SaleInputOutputs from "./SaleInputOutputs";
@@ -8,6 +8,9 @@ import SaleRate from "./SaleRate";
 
 export default function SalePreview(props) {
   const sale = props.sale;
+  useEffect(() => {
+    sale.scheduleRefresh(false);
+  }, [sale]);
   return (
     <div className="sale-preview card mb-3">
       <div className="card-body">

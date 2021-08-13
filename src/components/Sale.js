@@ -1,6 +1,6 @@
 import "./Sale.scss";
 import "./SalePreview.scss";
-import React from "react";
+import React, { useEffect } from "react";
 import RemainingDuration from "./RemainingDuration";
 import SaleInputOutputs from "./SaleInputOutputs";
 import Subscription from "./Subscription";
@@ -12,6 +12,9 @@ import { IsMainnet } from "../data/near";
 
 export default function Sale(props) {
   const sale = props.sale;
+  useEffect(() => {
+    sale.scheduleRefresh(true);
+  }, [sale]);
 
   return (
     <>
