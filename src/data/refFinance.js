@@ -35,6 +35,7 @@ const defaultWhitelistedTokens = new Set([
   "token.skyward.near",
   "token.ref-finance.near",
   "farm.berryclub.ek.near",
+  "f5cfbc74057c610c8ef151a439252680ac68c6dc.factory.bridge.near", // Octopus
 ]);
 
 const defaultRefFinance = {
@@ -171,7 +172,7 @@ export const useRefFinance = singletonHook(defaultRefFinance, () => {
 
   useEffect(() => {
     if (account && !account.loading) {
-      fetchRefData(account).then(setRefFinance);
+      fetchRefData(account).then(setRefFinance).catch(console.error);
     }
   }, [account]);
 

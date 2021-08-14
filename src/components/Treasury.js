@@ -31,6 +31,13 @@ import MutedDecimals from "./MutedDecimals";
 const DefaultMode = "DefaultMode";
 const RedeemMode = "RedeemMode";
 
+const defaultSelectedTokens = {
+  [NearConfig.wrapNearAccountId]: true,
+  "token.ref-finance.near": true,
+  "6b175474e89094c44da98b954eedeac495271d0f.factory.bridge.near": true,
+  "c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2.factory.bridge.near": true,
+};
+
 export default function Treasury(props) {
   const [mode, setMode] = useState(DefaultMode);
   const [loading, setLoading] = useState(false);
@@ -82,18 +89,11 @@ export default function Treasury(props) {
       selectedTokens === null &&
       account &&
       account.accountId &&
-      !account.loading &&
-      refFinance &&
-      !refFinance.loading
+      !account.loading
     ) {
-      setSelectedTokens(
-        Object.assign(
-          { [NearConfig.wrapNearAccountId]: true },
-          account.balances
-        )
-      );
+      setSelectedTokens(Object.assign(defaultSelectedTokens, account.balances));
     }
-  }, [account, refFinance, selectedTokens]);
+  }, [account, selectedTokens]);
 
   const receiveBalances = [];
 
