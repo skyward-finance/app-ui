@@ -5,6 +5,7 @@ import { OneNear } from "./utils";
 
 export const TGas = Big(10).pow(12);
 export const MaxGasPerTransaction = TGas.mul(300);
+export const MaxGasPerTransaction2FA = TGas.mul(220);
 export const StorageCostPerByte = Big(10).pow(19);
 export const TokenStorageDeposit = StorageCostPerByte.mul(125);
 export const BridgeTokenStorageDeposit = StorageCostPerByte.mul(1250);
@@ -13,12 +14,13 @@ export const SubscribeDeposit = StorageCostPerByte.mul(2000);
 export const CreateSaleDeposit = OneNear.mul(10).add(
   StorageCostPerByte.mul(5000)
 );
-
 export const MinUsdValue = Big(0.001);
 
 export const randomPublicKey = nearAPI.utils.PublicKey.from(
   "ed25519:8fWHD35Rjd78yeowShh9GwhRudRtLLsGCRjZtgPjAtw9"
 );
+
+const defaultCodeHash = "11111111111111111111111111111111";
 
 const isLocalhost = window.location.hostname === "localhost";
 export const noInternetMode = isLocalhost;
@@ -146,10 +148,16 @@ async function _initNear() {
   };
 
   _near.sendTransactions = async (items, callbackUrl) => {
-    let [nonce, blockHash] = await Promise.all([
+    let [nonce, blockHash, accountState] = await Promise.all([
       _near.fetchNextNonce(),
       _near.fetchBlockHash(),
+      _near.account.state(),
     ]);
+
+    const maxGasPerTransaction =
+      accountState.code_hash === defaultCodeHash
+        ? MaxGasPerTransaction
+        : MaxGasPerTransaction2FA;
 
     const transactions = [];
     let actions = [];
@@ -162,7 +170,7 @@ async function _initNear() {
       const newTotalGas = currentTotalGas.add(actionGas);
       if (
         receiverId !== currentReceiverId ||
-        newTotalGas.gt(MaxGasPerTransaction)
+        newTotalGas.gt(maxGasPerTransaction)
       ) {
         if (currentReceiverId !== null) {
           transactions.push(
