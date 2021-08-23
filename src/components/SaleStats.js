@@ -1,8 +1,6 @@
 import React from "react";
 import useSWR from "swr";
 
-const fetch = require("node-fetch");
-
 const statsFetcher = async (_key, saleId) => {
   let request = {
     user: "public_readonly",

@@ -2,6 +2,7 @@ import React from "react";
 import { useAccount } from "../data/account";
 import TokenSymbol from "./TokenSymbol";
 import { skywardUrl } from "../data/utils";
+import ReferralList from "./ReferralList";
 
 export default function ReferralLink(props) {
   const sale = props.sale;
@@ -35,6 +36,7 @@ export default function ReferralLink(props) {
           more <TokenSymbol tokenAccountId={sale.outTokens[0].tokenAccountId} />{" "}
           your friends receive, the more reward you and your friends get.
         </div>
+        <ReferralList sale={sale} />
       </div>
     </div>
   );
