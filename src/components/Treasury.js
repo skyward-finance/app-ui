@@ -33,7 +33,6 @@ const RedeemMode = "RedeemMode";
 
 const defaultSelectedTokens = {
   [NearConfig.wrapNearAccountId]: true,
-  "token.ref-finance.near": true,
   "6b175474e89094c44da98b954eedeac495271d0f.factory.bridge.near": true,
   "c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2.factory.bridge.near": true,
 };
@@ -157,16 +156,17 @@ export default function Treasury(props) {
     estimatedTreasuryUsdValue.div(treasury.skywardCirculatingSupply || Big(1))
   );
 
-  const renderBalances = balances.map(({ tokenAccountId, balances }) => {
-    const key = `${gkey}-treasuryBalance-${tokenAccountId}`;
-    return (
-      <TokenAndBalance
-        key={key}
-        tokenAccountId={tokenAccountId}
-        balances={balances}
-      />
-    );
-  });
+  const renderBalances = (balances) =>
+    balances.map(({ tokenAccountId, balances }) => {
+      const key = `${gkey}-treasuryBalance-${tokenAccountId}`;
+      return (
+        <TokenAndBalance
+          key={key}
+          tokenAccountId={tokenAccountId}
+          balances={balances}
+        />
+      );
+    });
 
   const redeemSkyward = async (e) => {
     e.preventDefault();
@@ -284,6 +284,9 @@ export default function Treasury(props) {
 
     await account.near.sendTransactions(actions);
   };
+
+  const positiveBalances = balances.filter((b) => b.usdValue.gt(0));
+  const zeroValueBalances = balances.filter((b) => b.usdValue.eq(0));
 
   return (
     <div className="card">
@@ -483,8 +486,15 @@ export default function Treasury(props) {
             )}
           </div>
           <hr />
-          <div>Treasury Balances</div>
-          <div>{renderBalances}</div>
+          {positiveBalances.length > 0 && (
+            <>
+              <div>Treasury Tokens listed on REF</div>
+              <div>{renderBalances(positiveBalances)}</div>
+              <hr />
+            </>
+          )}
+          <div>Other Treasury Tokens</div>
+          <div>{renderBalances(zeroValueBalances)}</div>
         </div>
       )}
     </div>

@@ -167,6 +167,8 @@ export default function Subscription(props) {
       ? amount.sub(skywardBalance)
       : Big(0);
 
+    await makeOutRegistered(sale, actions);
+
     if (!(sale.inTokenAccountId in account.balances)) {
       actions.push([
         NearConfig.contractName,
@@ -313,6 +315,9 @@ export default function Subscription(props) {
         Big((freshSale.remainingDuration - 60e3) / freshSale.remainingDuration)
       )
       .round();
+
+    await makeOutRegistered(sale, actions);
+
     if (maxWithdraw) {
       amount = maxReceiveAmount;
       actions.push([
@@ -391,16 +396,7 @@ export default function Subscription(props) {
     await account.near.sendTransactions(actions);
   };
 
-  const claimOut = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    await account.near.contract.sale_claim_out_tokens(
-      {
-        sale_id: sale.saleId,
-      },
-      TGas.mul(60).toFixed(0)
-    );
-    const actions = [];
+  const makeOutRegistered = async (sale, actions) => {
     const outTokens = sale.outTokens.map((o) => o.tokenAccountId);
     for (let i = 0; i < outTokens.length; i++) {
       if (
@@ -420,6 +416,20 @@ export default function Subscription(props) {
         ]);
       }
     }
+  };
+
+  const claimOut = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    await account.near.contract.sale_claim_out_tokens(
+      {
+        sale_id: sale.saleId,
+      },
+      TGas.mul(60).toFixed(0)
+    );
+    const actions = [];
+    await makeOutRegistered(sale, actions);
+    const outTokens = sale.outTokens.map((o) => o.tokenAccountId);
     if (actions.length > 0) {
       outTokens.forEach((tokenAccountId) => {
         actions.push([

@@ -58,7 +58,7 @@ export const MainNearConfig = {
   skywardTokenAccountId: `token.${MainnetContract}`,
   walletUrl: "https://wallet.near.org",
   storageCostPerByte: StorageCostPerByte,
-  refContractName: "ref-finance.near",
+  refContractName: "v2.ref-finance.near",
 };
 
 export const NearConfig = IsMainnet ? MainNearConfig : TestNearConfig;
