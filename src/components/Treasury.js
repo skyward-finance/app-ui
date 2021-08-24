@@ -25,17 +25,11 @@ import Big from "big.js";
 import { isTokenRegistered, useToken } from "../data/token";
 import TokenBalance from "./TokenBalance";
 import * as nearAPI from "near-api-js";
-import { useRefFinance } from "../data/refFinance";
+import { defaultWhitelistedTokens, useRefFinance } from "../data/refFinance";
 import MutedDecimals from "./MutedDecimals";
 
 const DefaultMode = "DefaultMode";
 const RedeemMode = "RedeemMode";
-
-const defaultSelectedTokens = {
-  [NearConfig.wrapNearAccountId]: true,
-  "6b175474e89094c44da98b954eedeac495271d0f.factory.bridge.near": true,
-  "c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2.factory.bridge.near": true,
-};
 
 export default function Treasury(props) {
   const [mode, setMode] = useState(DefaultMode);
@@ -90,7 +84,12 @@ export default function Treasury(props) {
       account.accountId &&
       !account.loading
     ) {
-      setSelectedTokens(Object.assign(defaultSelectedTokens, account.balances));
+      const refTokens = [...defaultWhitelistedTokens].reduce((a, v) => {
+        a[v] = true;
+        return a;
+      }, {});
+
+      setSelectedTokens(Object.assign(refTokens, account.balances));
     }
   }, [account, selectedTokens]);
 
