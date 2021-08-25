@@ -31,6 +31,49 @@ import MutedDecimals from "./MutedDecimals";
 const DefaultMode = "DefaultMode";
 const RedeemMode = "RedeemMode";
 
+const SkywardVestingSchedule = [
+  {
+    startTimestamp: 1627776000000,
+    endTimestamp: 1630454400000,
+    amount: Big("10000000000000000000000"),
+  },
+  {
+    startTimestamp: 1640995200000,
+    endTimestamp: 1656633600000,
+    amount: Big("90000000000000000000000"),
+  },
+  {
+    startTimestamp: 1625097600000,
+    endTimestamp: 162509760000 + 604800000,
+    amount: Big("250000000000000000000000"),
+  },
+  {
+    startTimestamp: 1627776000000,
+    endTimestamp: 1627776000000 + 604800000,
+    amount: Big("200000000000000000000000"),
+  },
+  {
+    startTimestamp: 1630454400000,
+    endTimestamp: 1630454400000 + 604800000,
+    amount: Big("150000000000000000000000"),
+  },
+  {
+    startTimestamp: 1633046400000,
+    endTimestamp: 1633046400000 + 604800000,
+    amount: Big("100000000000000000000000"),
+  },
+  {
+    startTimestamp: 1635724800000,
+    endTimestamp: 1635724800000 + 604800000,
+    amount: Big("100000000000000000000000"),
+  },
+  {
+    startTimestamp: 1638316800000,
+    endTimestamp: 1638316800000 + 604800000,
+    amount: Big("100000000000000000000000"),
+  },
+];
+
 export default function Treasury(props) {
   const [mode, setMode] = useState(DefaultMode);
   const [loading, setLoading] = useState(false);
@@ -44,6 +87,20 @@ export default function Treasury(props) {
   const refFinance = useRefFinance();
 
   let availableSkywardBalance = Big(0);
+  let totalVestedAmount = Big(0);
+  const currentTimestamp = new Date().getTime();
+  SkywardVestingSchedule.forEach(({ startTimestamp, endTimestamp, amount }) => {
+    totalVestedAmount = totalVestedAmount.add(
+      currentTimestamp <= startTimestamp
+        ? Big(0)
+        : currentTimestamp >= endTimestamp
+        ? amount
+        : Big(currentTimestamp - startTimestamp)
+            .mul(amount)
+            .div(endTimestamp - startTimestamp)
+            .round(0, 0)
+    );
+  });
 
   if (account && !account.loading && account.accountId) {
     if (NearConfig.skywardTokenAccountId in account.balances) {
@@ -286,6 +343,11 @@ export default function Treasury(props) {
 
   const positiveBalances = balances.filter((b) => b.usdValue.gt(0));
   const zeroValueBalances = balances.filter((b) => b.usdValue.eq(0));
+  const skywardBurned =
+    treasury && !treasury.loading
+      ? totalVestedAmount.sub(treasury.skywardCirculatingSupply)
+      : Big(0);
+  const skywardTotalSupply = Big(10).pow(24).sub(skywardBurned);
 
   return (
     <div className="card">
@@ -296,10 +358,13 @@ export default function Treasury(props) {
           <h2 className="primary-header">Treasury</h2>
           <hr />
           <div>
-            Skyward Circulating Supply
             <TokenAndBalance
               tokenAccountId={NearConfig.skywardTokenAccountId}
-              balances={[["", treasury.skywardCirculatingSupply]]}
+              balances={[
+                ["CIRCULATING SUPPLY ", treasury.skywardCirculatingSupply],
+                ["BURNED ", skywardBurned],
+                ["TOTAL SUPPLY ", skywardTotalSupply],
+              ]}
             />
           </div>
           {estimatedTreasuryUsdValue.gt(0) && (
