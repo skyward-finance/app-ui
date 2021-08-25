@@ -70,6 +70,12 @@ export default function ReferralList(props) {
   return referrals ? (
     <>
       <div className="mb-3 mt-3">
+        <div className="mb-1">
+          <span className="text-muted">
+            Note, the estimated amounts below may be less than the actual
+            amounts. The withdrawals by referees are not accounted.
+          </span>
+        </div>
         <div>
           Total amount deposited by your referees:{" "}
           <TokenBalance
@@ -85,12 +91,6 @@ export default function ReferralList(props) {
             balance={computeBonus(totalDeposit)}
           />{" "}
           <TokenSymbol tokenAccountId={outToken.tokenAccountId} />{" "}
-        </div>
-        <div>
-          <span className="text-muted">
-            Note, the actual amounts might be less than estimated. The
-            withdrawals by referees are not accounted.
-          </span>
         </div>
       </div>
       {referrals.length > 0 && (

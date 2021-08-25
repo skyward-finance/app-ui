@@ -14,9 +14,14 @@ export default function ReferralLink(props) {
   const referralLink =
     skywardUrl() + `/sale/${sale.saleId}?r=${account.accountId}`;
 
+  const referralBonus = sale.outTokens[0].referralBpt / 100;
+
   return (
     <div className={"card mb-2"}>
       <div className="card-body">
+        <div className="mb-3">
+          Referral bonus for this listing is <b>{referralBonus}%</b>
+        </div>
         <div className="mb-3">
           <label htmlFor="ref-link" className="form-label">
             <b>Your referral link</b>
