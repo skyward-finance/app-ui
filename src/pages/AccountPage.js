@@ -3,6 +3,7 @@ import Account from "../components/Account";
 import { useSales } from "../data/sales";
 import SalePreview from "../components/SalePreview";
 import uuid from "react-uuid";
+import AllReferrals from "../components/AllReferrals";
 
 export default function AccountPage(props) {
   const [gkey] = useState(uuid());
@@ -26,6 +27,7 @@ export default function AccountPage(props) {
             })}
           </div>
         )}
+        <AllReferrals />
       </div>
     </div>
   );

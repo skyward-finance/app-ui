@@ -58,8 +58,6 @@ export default function ReferralList(props) {
   const outToken = sale.outTokens[0];
   const referralBpt = outToken.referralBpt;
 
-  console.log(sale);
-
   const computeBonus = (amount) =>
     sale.inTokenPaid.gt(0)
       ? amount
