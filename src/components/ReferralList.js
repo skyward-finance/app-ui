@@ -47,7 +47,7 @@ export default function ReferralList(props) {
     referralFetcher
   );
 
-  if (!(account && account.accountId)) {
+  if (!(account && account.accountId) || !sale) {
     return false;
   }
 
@@ -55,15 +55,45 @@ export default function ReferralList(props) {
     ? referrals.reduce((s, { amount }) => s.add(amount), Big(0))
     : Big(0);
 
+  const outToken = sale.outTokens[0];
+  const referralBpt = outToken.referralBpt;
+
+  console.log(sale);
+
+  const computeBonus = (amount) =>
+    sale.inTokenPaid.gt(0)
+      ? amount
+          .mul(outToken.distributed.add(outToken.remaining))
+          .div(sale.inTokenPaid)
+          .mul(referralBpt)
+          .div(20000)
+      : Big(0);
+
   return referrals ? (
     <>
       <div className="mb-3 mt-3">
-        Total amount deposited by your referees:{" "}
-        <TokenBalance
-          tokenAccountId={sale.inTokenAccountId}
-          balance={totalDeposit}
-        />{" "}
-        <TokenSymbol tokenAccountId={sale.inTokenAccountId} />
+        <div>
+          Total amount deposited by your referees:{" "}
+          <TokenBalance
+            tokenAccountId={sale.inTokenAccountId}
+            balance={totalDeposit}
+          />{" "}
+          <TokenSymbol tokenAccountId={sale.inTokenAccountId} />
+        </div>
+        <div>
+          Estimated total bonus:{" "}
+          <TokenBalance
+            tokenAccountId={outToken.tokenAccountId}
+            balance={computeBonus(totalDeposit)}
+          />{" "}
+          <TokenSymbol tokenAccountId={outToken.tokenAccountId} />{" "}
+        </div>
+        <div>
+          <span className="text-muted">
+            Note, the actual amounts might be less than estimated. The
+            withdrawals by referees are not accounted.
+          </span>
+        </div>
       </div>
       {referrals.length > 0 && (
         <div className="mb-3 table-responsive">
@@ -73,19 +103,27 @@ export default function ReferralList(props) {
                 <th scope="col">#</th>
                 <th scope="col">Referee account ID</th>
                 <th scope="col">Amount deposited</th>
+                <th scope="col">Estimated bonus</th>
               </tr>
             </thead>
             <tbody>
               {referrals.map(({ accountId, amount }, i) => (
                 <tr key={`${gkey}-ref-${accountId}`}>
                   <th scope="row">{i + 1}</th>
-                  <td className="col-8">{accountId}</td>
-                  <td className="col-4">
+                  <td className="col-6">{accountId}</td>
+                  <td className="col-3">
                     <TokenBalance
                       tokenAccountId={sale.inTokenAccountId}
                       balance={amount}
                     />{" "}
                     <TokenSymbol tokenAccountId={sale.inTokenAccountId} />
+                  </td>
+                  <td className="col-3">
+                    <TokenBalance
+                      tokenAccountId={outToken.tokenAccountId}
+                      balance={computeBonus(amount)}
+                    />{" "}
+                    <TokenSymbol tokenAccountId={outToken.tokenAccountId} />
                   </td>
                 </tr>
               ))}
