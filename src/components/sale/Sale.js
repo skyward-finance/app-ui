@@ -8,7 +8,7 @@ import ReferralLink from "./ReferralLink";
 import PriceHistory from "./PriceHistory";
 import SaleRate from "./SaleRate";
 import SaleStats from "./SaleStats";
-import { IsMainnet } from "../data/near";
+import { IsMainnet } from "../../data/near";
 
 export default function Sale(props) {
   const sale = props.sale;

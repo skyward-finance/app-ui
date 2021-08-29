@@ -53,6 +53,27 @@ const usdTokens = {
   ),
 };
 
+export function getRefReturn(pool, tokenIn, amountIn) {
+  if (!amountIn) {
+    return Big(0);
+  }
+  const indexIn = pool.tt.indexOf(tokenIn);
+  if (indexIn < 0) {
+    return null;
+  }
+  const balanceIn = pool.tokens[tokenIn];
+  const tokenOut = pool.tt[1 - indexIn];
+  const balanceOut = pool.tokens[tokenOut];
+  if (amountIn.eq(0)) {
+    return Big(0);
+  }
+  let amountWithFee = Big(amountIn).mul(Big(10000 - pool.fee));
+  return amountWithFee
+    .mul(balanceOut)
+    .div(Big(10000).mul(balanceIn).add(amountWithFee))
+    .round(0, 0);
+}
+
 const fetchRefData = async (account) => {
   const near = account.near;
   const refContract = new nearAPI.Contract(

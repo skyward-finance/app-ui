@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
 import uuid from "react-uuid";
-import TokenAndBalance from "./TokenAndBalance";
-import { useTreasury } from "../data/treasury";
+import TokenAndBalance from "../token/TokenAndBalance";
+import { useTreasury } from "../../data/treasury";
 import {
   MinUsdValue,
   NearConfig,
   SkywardRegisterStorageDeposit,
   TGas,
-} from "../data/near";
+} from "../../data/near";
 import {
   bigMin,
   bigToString,
@@ -17,16 +17,16 @@ import {
   OneSkyward,
   tokenStorageDeposit,
   toTokenBalance,
-} from "../data/utils";
-import TokenSymbol from "./TokenSymbol";
-import AvailableInput from "./AvailableInput";
-import { useAccount } from "../data/account";
+} from "../../data/utils";
+import TokenSymbol from "../token/TokenSymbol";
+import AvailableInput from "../common/AvailableInput";
+import { useAccount } from "../../data/account";
 import Big from "big.js";
-import { isTokenRegistered, useToken } from "../data/token";
-import TokenBalance from "./TokenBalance";
+import { isTokenRegistered, useToken } from "../../data/token";
+import TokenBalance from "../token/TokenBalance";
 import * as nearAPI from "near-api-js";
-import { defaultWhitelistedTokens, useRefFinance } from "../data/refFinance";
-import MutedDecimals from "./MutedDecimals";
+import { defaultWhitelistedTokens, useRefFinance } from "../../data/refFinance";
+import MutedDecimals from "../common/MutedDecimals";
 
 const DefaultMode = "DefaultMode";
 const RedeemMode = "RedeemMode";

@@ -1,4 +1,4 @@
-import { useToken } from "../data/token";
+import { useToken } from "../../data/token";
 
 export default function TokenSymbol(props) {
   const tokenAccountId = props.tokenAccountId;

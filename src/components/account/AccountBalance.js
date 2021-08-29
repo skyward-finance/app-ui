@@ -1,15 +1,15 @@
 import "./AccountBalance.scss";
 import React, { useEffect, useState } from "react";
-import TokenAndBalance from "./TokenAndBalance";
-import { useAccount } from "../data/account";
-import TokenSymbol from "./TokenSymbol";
-import { useToken } from "../data/token";
-import { NearConfig, TGas } from "../data/near";
-import { Loading, tokenStorageDeposit } from "../data/utils";
+import TokenAndBalance from "../token/TokenAndBalance";
+import { useAccount } from "../../data/account";
+import TokenSymbol from "../token/TokenSymbol";
+import { useToken } from "../../data/token";
+import { NearConfig, TGas } from "../../data/near";
+import { Loading, tokenStorageDeposit } from "../../data/utils";
 import * as nearAPI from "near-api-js";
-import TokenBalance from "./TokenBalance";
+import TokenBalance from "../token/TokenBalance";
 import Big from "big.js";
-import { useTokenBalances } from "../data/tokenBalances";
+import { useTokenBalances } from "../../data/tokenBalances";
 
 export const BalanceType = {
   Internal: "INTERNAL",

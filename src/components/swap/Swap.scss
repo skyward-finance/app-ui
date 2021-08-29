@@ -1,0 +1,14 @@
+.swap-card {
+  @media (min-width: 62rem) {
+    width: 29rem;
+    vertical-align: top;
+  }
+}
+
+.rotate-arrow {
+  display: inline-block;
+  transition: transform .7s ease-in-out;
+  &:hover {
+    transform: rotate(180deg);
+  }
+}

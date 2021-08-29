@@ -2,7 +2,7 @@ import useSWR from "swr";
 import { useAccount } from "./account";
 import { NearConfig } from "./near";
 import { availableNearBalance } from "./utils";
-import { BalanceType } from "../components/AccountBalance";
+import { BalanceType } from "../components/account/AccountBalance";
 import { useToken } from "./token";
 import { useRefFinance } from "./refFinance";
 import { useEffect, useState } from "react";

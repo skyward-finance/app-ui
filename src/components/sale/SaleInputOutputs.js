@@ -1,5 +1,5 @@
 import "./SaleInputOutputs.scss";
-import TokenAndBalance from "./TokenAndBalance";
+import TokenAndBalance from "../token/TokenAndBalance";
 import React, { useState } from "react";
 import uuid from "react-uuid";
 

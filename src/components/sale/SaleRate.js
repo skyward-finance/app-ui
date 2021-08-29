@@ -1,4 +1,4 @@
-import Rate from "./Rate";
+import Rate from "../common/Rate";
 import React from "react";
 
 export default function SaleRate(props) {

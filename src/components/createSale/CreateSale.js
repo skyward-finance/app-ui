@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import { useAccount } from "../data/account";
-import TokenSelect from "./TokenSelect";
-import { AccountBalance, BalanceType } from "./AccountBalance";
-import AvailableInput from "./AvailableInput";
-import { useToken } from "../data/token";
+import { useAccount } from "../../data/account";
+import TokenSelect from "../token/TokenSelect";
+import { AccountBalance, BalanceType } from "../account/AccountBalance";
+import AvailableInput from "../common/AvailableInput";
+import { useToken } from "../../data/token";
 import Big from "big.js";
 import {
   fromTokenBalance,
@@ -12,9 +12,9 @@ import {
   skywardUrl,
   tokenStorageDeposit,
   toTokenBalance,
-} from "../data/utils";
-import SalePreview from "./SalePreview";
-import { addSaleMethods, useSales } from "../data/sales";
+} from "../../data/utils";
+import SalePreview from "../sale/SalePreview";
+import { addSaleMethods, useSales } from "../../data/sales";
 import DatePicker from "react-datepicker";
 import "./CreateSale.scss";
 
@@ -24,8 +24,10 @@ import {
   NearConfig,
   SkywardRegisterStorageDeposit,
   TGas,
-} from "../data/near";
+} from "../../data/near";
 import * as nearAPI from "near-api-js";
+import { useTreasury } from "../../data/treasury";
+import { useRefFinance } from "../../data/refFinance";
 
 const OneDay = 24 * 60 * 60 * 1000;
 const OneWeek = 7 * OneDay;
@@ -33,6 +35,9 @@ const OneWeek = 7 * OneDay;
 export default function CreatSale(props) {
   const account = useAccount();
   const sales = useSales();
+  const refFinance = useRefFinance();
+  const treasury = useTreasury();
+
   const [loading, setLoading] = useState(false);
   const [inTokenAccountId, setInTokenAccountId] = useState(null);
   const [outputTokenId, setOutputTokenId] = useState(null);
@@ -44,6 +49,13 @@ export default function CreatSale(props) {
   const [referralBpt, setReferralBpt] = useState(100);
 
   const outToken = useToken(outputTokenId);
+
+  const allTokens = Object.assign(
+    {},
+    account && !account.loading ? account.balances : {},
+    refFinance ? refFinance.balances : {},
+    treasury ? treasury.balances : {}
+  );
 
   let availableOutBalance = Big(0);
   if (fetchedBalances) {
@@ -233,6 +245,8 @@ export default function CreatSale(props) {
     );
   };
 
+  const accountTokens = account ? Object.keys(account.balances) : [];
+
   return (
     <>
       <div className="card mb-2">
@@ -255,6 +269,8 @@ export default function CreatSale(props) {
             </label>
             <TokenSelect
               id="input-token-select"
+              value={inTokenAccountId}
+              tokens={Object.keys(allTokens)}
               tokenFilter={(tokenAccountId) => tokenAccountId !== outputTokenId}
               onSelectTokenId={setInTokenAccountId}
             />
@@ -267,6 +283,8 @@ export default function CreatSale(props) {
               </label>
               <TokenSelect
                 id="output-token-select"
+                value={outputTokenId}
+                tokens={accountTokens}
                 tokenFilter={(tokenAccountId) =>
                   tokenAccountId !== inTokenAccountId
                 }

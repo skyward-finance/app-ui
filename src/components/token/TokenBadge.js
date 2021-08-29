@@ -1,6 +1,6 @@
 import "./TokenBadge.scss";
 import React from "react";
-import { useToken } from "../data/token";
+import { useToken } from "../../data/token";
 
 export default function TokenBadge(props) {
   const tokenAccountId = props.tokenAccountId;

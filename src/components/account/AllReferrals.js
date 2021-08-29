@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import { useAccount } from "../data/account";
+import { useAccount } from "../../data/account";
 import useSWR from "swr";
 import Big from "big.js";
 import uuid from "react-uuid";
-import TokenBalance from "./TokenBalance";
-import TokenSymbol from "./TokenSymbol";
-import { useSales } from "../data/sales";
+import TokenBalance from "../token/TokenBalance";
+import TokenSymbol from "../token/TokenSymbol";
+import { useSales } from "../../data/sales";
 
 const referralFetcher = async (_key, accountId) => {
   if (!accountId) {

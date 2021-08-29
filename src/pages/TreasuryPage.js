@@ -1,5 +1,5 @@
 import React from "react";
-import Treasury from "../components/Treasury";
+import Treasury from "../components/treasury/Treasury";
 
 export default function TreasuryPage(props) {
   return (

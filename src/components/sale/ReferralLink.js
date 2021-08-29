@@ -1,7 +1,7 @@
 import React from "react";
-import { useAccount } from "../data/account";
-import TokenSymbol from "./TokenSymbol";
-import { skywardUrl } from "../data/utils";
+import { useAccount } from "../../data/account";
+import TokenSymbol from "../token/TokenSymbol";
+import { skywardUrl } from "../../data/utils";
 import ReferralList from "./ReferralList";
 
 export default function ReferralLink(props) {

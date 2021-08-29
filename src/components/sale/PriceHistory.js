@@ -2,11 +2,11 @@ import React, { useEffect, useState } from "react";
 import "chartjs-adapter-moment";
 
 import { Line } from "react-chartjs-2";
-import { useAccount } from "../data/account";
-import { LsKey, NearConfig } from "../data/near";
-import { mapSale } from "../data/sales";
-import { useToken } from "../data/token";
-import { fromTokenBalance } from "../data/utils";
+import { useAccount } from "../../data/account";
+import { LsKey, NearConfig } from "../../data/near";
+import { mapSale } from "../../data/sales";
+import { useToken } from "../../data/token";
+import { fromTokenBalance } from "../../data/utils";
 import ls from "local-storage";
 
 const UnknownHistorySize = 24 * 4;

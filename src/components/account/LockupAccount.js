@@ -1,11 +1,15 @@
 import React, { useState } from "react";
-import { dateToString, Loading, tokenStorageDeposit } from "../data/utils";
+import { dateToString, Loading, tokenStorageDeposit } from "../../data/utils";
 import Timer from "react-compound-timer";
-import TokenBalance from "./TokenBalance";
-import { NearConfig, SkywardRegisterStorageDeposit, TGas } from "../data/near";
-import TokenSymbol from "./TokenSymbol";
+import TokenBalance from "../token/TokenBalance";
+import {
+  NearConfig,
+  SkywardRegisterStorageDeposit,
+  TGas,
+} from "../../data/near";
+import TokenSymbol from "../token/TokenSymbol";
 import * as nearAPI from "near-api-js";
-import { useToken } from "../data/token";
+import { useToken } from "../../data/token";
 
 export default function LockupAccount(props) {
   const [loading, setLoading] = useState(false);

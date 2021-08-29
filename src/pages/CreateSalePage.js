@@ -1,5 +1,5 @@
 import React from "react";
-import CreatSale from "../components/CreateSale";
+import CreatSale from "../components/createSale/CreateSale";
 
 export default function CreateSalePage(props) {
   return (

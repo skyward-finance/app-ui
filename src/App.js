@@ -13,6 +13,7 @@ import TreasuryPage from "./pages/TreasuryPage";
 import CreateSalePage from "./pages/CreateSalePage";
 import { useAccount } from "./data/account";
 import { isTokenRegistered } from "./data/token";
+import SwapPage from "./pages/SwapPage";
 
 function App(props) {
   const [connected, setConnected] = useState(false);
@@ -199,6 +200,17 @@ function App(props) {
                     </Link>
                   </li>
                 )}
+                {signedIn && (
+                  <li className="nav-item">
+                    <Link
+                      className="nav-link"
+                      aria-current="page"
+                      to={`/swap/`}
+                    >
+                      Swap
+                    </Link>
+                  </li>
+                )}
               </ul>
               <form className="d-flex">{header}</form>
             </div>
@@ -229,6 +241,11 @@ function App(props) {
           {signedIn && (
             <Route exact path={"/create_sale/"}>
               <CreateSalePage {...passProps} />
+            </Route>
+          )}
+          {signedIn && (
+            <Route path={"/swap/:inputTokenId?/:outputTokenId?"}>
+              <SwapPage {...passProps} />
             </Route>
           )}
         </Switch>

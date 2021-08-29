@@ -78,7 +78,7 @@ export const bigToString = (b, p, len) => {
   if (b === null) {
     return "???";
   }
-  let s = b.toFixed();
+  let s = b.abs().toFixed();
   let pos = s.indexOf(".");
   p = p || 6;
   len = len || 7;
@@ -99,6 +99,10 @@ export const bigToString = (b, p, len) => {
 
   if (s === "0.000000" && p === 6 && len === 7) {
     return "<0.000001";
+  }
+
+  if (b.lt(0)) {
+    s = "-" + s;
   }
 
   return s;

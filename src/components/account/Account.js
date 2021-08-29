@@ -1,25 +1,29 @@
 import React, { useState } from "react";
-import { useAccount } from "../data/account";
+import { useAccount } from "../../data/account";
 import uuid from "react-uuid";
 import { AccountBalance } from "./AccountBalance";
-import { Loading } from "../data/utils";
+import { Loading } from "../../data/utils";
 import LockupAccount from "./LockupAccount";
+import { useRefFinance } from "../../data/refFinance";
 
 export default function Account(props) {
   const [gkey] = useState(uuid());
   const account = useAccount();
+  const refFinance = useRefFinance();
 
-  const balances =
-    account && !account.loading
-      ? Object.entries(account.balances).map(([tokenAccountId, _balance]) => (
-          <AccountBalance
-            key={`${gkey}-${tokenAccountId}`}
-            tokenAccountId={tokenAccountId}
-            clickable
-          />
-        ))
-      : [];
+  const tokens = Object.assign(
+    {},
+    account && !account.loading ? account.balances : {},
+    refFinance ? refFinance.balances : {}
+  );
 
+  const balances = Object.keys(tokens).map((tokenAccountId) => (
+    <AccountBalance
+      key={`${gkey}-${tokenAccountId}`}
+      tokenAccountId={tokenAccountId}
+      clickable
+    />
+  ));
   return (
     <>
       {account.lockupAccount && (

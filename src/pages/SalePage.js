@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useSales } from "../data/sales";
 import { useParams } from "react-router";
-import Sale from "../components/Sale";
+import Sale from "../components/sale/Sale";
 import { useLocation, useHistory } from "react-router-dom";
 import ls from "local-storage";
 import { getCurrentReferralId, referralLsKey } from "../data/utils";

@@ -1,19 +1,25 @@
 import "./Rate.scss";
 import React, { useState } from "react";
-import TokenSymbol from "./TokenSymbol";
+import TokenSymbol from "../token/TokenSymbol";
 import Big from "big.js";
 import {
   bigToString,
   computeUsdBalance,
   fromTokenBalance,
   toTokenBalance,
-} from "../data/utils";
-import { useToken } from "../data/token";
-import { useRefFinance } from "../data/refFinance";
+} from "../../data/utils";
+import { useToken } from "../../data/token";
+import { useRefFinance } from "../../data/refFinance";
 import MutedDecimals from "./MutedDecimals";
 
+const View = {
+  Regular: "Regular",
+  USD: "USD",
+  Inverse: "Inverse",
+};
+
 export default function Rate(props) {
-  const [view, setView] = useState(1);
+  const [view, setView] = useState(0);
   const sale = props.sale || {};
   const outTokens = sale.outTokens || props.outTokens;
   const out = outTokens[0];
@@ -35,17 +41,25 @@ export default function Rate(props) {
     toTokenBalance(inToken, inversePrice)
   );
 
-  const numViews = usdBalance ? 3 : 2;
+  const views = [View.Regular];
+  if (usdBalance) {
+    views.push(View.USD);
+  }
+  if (!props.hideInverse) {
+    views.push(View.Inverse);
+  }
+
+  const numViews = views.length;
 
   return (
-    <div className="rate">
+    <div className="left-right">
       <div className="rate-title">{props.title || "Rate"}</div>
       {price ? (
         <div
           className="rate-body text-muted"
           onClick={() => setView((view + 1) % numViews)}
         >
-          {view === 0 ? (
+          {views[view] === View.Inverse ? (
             <div>
               1 <TokenSymbol tokenAccountId={inTokenAccountId} /> ={" "}
               <span className="rate-value">
@@ -53,7 +67,7 @@ export default function Rate(props) {
               </span>{" "}
               <TokenSymbol tokenAccountId={out.tokenAccountId} />
             </div>
-          ) : view === 1 ? (
+          ) : views[view] === View.Regular ? (
             <div>
               1 <TokenSymbol tokenAccountId={out.tokenAccountId} /> ={" "}
               <span className="rate-value">

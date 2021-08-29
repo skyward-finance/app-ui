@@ -96,3 +96,12 @@ a {
 .pointer {
   cursor: pointer;
 }
+
+.left-right {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: space-between;
+  &:first-child, &:last-child {
+    flex: 1 1;
+  }
+}

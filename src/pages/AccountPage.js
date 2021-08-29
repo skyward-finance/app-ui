@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import Account from "../components/Account";
+import Account from "../components/account/Account";
 import { useSales } from "../data/sales";
-import SalePreview from "../components/SalePreview";
+import SalePreview from "../components/sale/SalePreview";
 import uuid from "react-uuid";
-import AllReferrals from "../components/AllReferrals";
+import AllReferrals from "../components/account/AllReferrals";
 
 export default function AccountPage(props) {
   const [gkey] = useState(uuid());

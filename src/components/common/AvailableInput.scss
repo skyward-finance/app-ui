@@ -1,0 +1,26 @@
+.extra-label-right {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  z-index: 2;
+  max-width: 100%;
+  padding: 0.25rem 0.5rem;
+  color: #fff;
+  transform: translate(-100%, -25%);
+}
+
+.extra-padding {
+  padding-right: 2rem;
+}
+
+.available-input {
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+  }
+
+  .form-floating > .form-control-lg {
+    height: calc(4.5rem + 2px);
+  }
+}
+

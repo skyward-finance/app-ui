@@ -59,6 +59,7 @@ export const MainNearConfig = {
   walletUrl: "https://wallet.near.org",
   storageCostPerByte: StorageCostPerByte,
   refContractName: "v2.ref-finance.near",
+  oldRefFinanceToken: "token.ref-finance.near",
 };
 
 export const NearConfig = IsMainnet ? MainNearConfig : TestNearConfig;

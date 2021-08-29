@@ -2,9 +2,9 @@ import "./Sale.scss";
 import "./SalePreview.scss";
 import React, { useState } from "react";
 import SaleInputOutputs from "./SaleInputOutputs";
-import Rate from "./Rate";
+import Rate from "../common/Rate";
 import Big from "big.js";
-import TokenSymbol from "./TokenSymbol";
+import TokenSymbol from "../token/TokenSymbol";
 import {
   bigMin,
   bigToString,
@@ -15,9 +15,9 @@ import {
   Loading,
   tokenStorageDeposit,
   toTokenBalance,
-} from "../data/utils";
-import { isTokenRegistered, useToken } from "../data/token";
-import { useAccount } from "../data/account";
+} from "../../data/utils";
+import { isTokenRegistered, useToken } from "../../data/token";
+import { useAccount } from "../../data/account";
 import {
   IsMainnet,
   LsKey,
@@ -25,15 +25,15 @@ import {
   SkywardRegisterStorageDeposit,
   SubscribeDeposit,
   TGas,
-} from "../data/near";
+} from "../../data/near";
 import * as nearAPI from "near-api-js";
-import AvailableInput from "./AvailableInput";
+import AvailableInput from "../common/AvailableInput";
 import ls from "local-storage";
-import TokenBalance from "./TokenBalance";
-import { useSales } from "../data/sales";
-import { useTokenBalances } from "../data/tokenBalances";
-import { BalanceType } from "./AccountBalance";
-import { useRefFinance } from "../data/refFinance";
+import TokenBalance from "../token/TokenBalance";
+import { useSales } from "../../data/sales";
+import { useTokenBalances } from "../../data/tokenBalances";
+import { BalanceType } from "../account/AccountBalance";
+import { useRefFinance } from "../../data/refFinance";
 
 const DepositMode = "Deposit";
 const WithdrawMode = "Withdrawal";

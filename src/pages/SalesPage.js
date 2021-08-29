@@ -2,7 +2,7 @@ import "./SalesPage.scss";
 import React, { useState } from "react";
 import { useSales } from "../data/sales";
 import uuid from "react-uuid";
-import SalePreview from "../components/SalePreview";
+import SalePreview from "../components/sale/SalePreview";
 import { isSaleWhitelisted, Loading } from "../data/utils";
 import { useRefFinance } from "../data/refFinance";
 

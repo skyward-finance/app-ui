@@ -3,12 +3,12 @@ import { useAccount } from "../data/account";
 import { singletonHook } from "react-singleton-hook";
 import * as nearAPI from "near-api-js";
 import { MainNearConfig, NearConfig, TGas } from "../data/near";
-import { AccountBalance } from "../components/AccountBalance";
+import { AccountBalance } from "../components/account/AccountBalance";
 import Big from "big.js";
-import TokenAndBalance from "../components/TokenAndBalance";
+import TokenAndBalance from "../components/token/TokenAndBalance";
 import { useToken } from "../data/token";
 import { Loading } from "../data/utils";
-import TokenBalance from "../components/TokenBalance";
+import TokenBalance from "../components/token/TokenBalance";
 import { Link } from "react-router-dom";
 
 export default function LinkMainnetPage(props) {

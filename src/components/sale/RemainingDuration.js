@@ -1,5 +1,5 @@
 import "./RemainingDuration.scss";
-import { dateToString } from "../data/utils";
+import { dateToString } from "../../data/utils";
 import Timer from "react-compound-timer";
 import React from "react";
 

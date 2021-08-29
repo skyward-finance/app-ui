@@ -1,7 +1,7 @@
 import React from "react";
-import { useAccount } from "../data/account";
 import AsyncSelect from "react-select/async";
 import TokenBadge from "./TokenBadge";
+import "./TokenSelect.scss";
 
 const selectStyles = {
   singleValue: (provided, state) => ({
@@ -11,7 +11,7 @@ const selectStyles = {
     transform: "none",
     webkitTransform: "none",
     overflow: "auto",
-    margin: "0.5rem",
+    margin: "0.25rem",
   }),
   option: (provided, state) => ({
     ...provided,
@@ -21,20 +21,17 @@ const selectStyles = {
 };
 
 export default function TokenSelect(props) {
-  const account = useAccount();
-
   const propsFilter = props.tokenFilter || (() => true);
   const tokenFilter = (option) => propsFilter(option.value);
 
-  const tokenOptions =
-    account && !account.loading
-      ? Object.entries(account.balances)
-          .map(([tokenAccountId, _balance]) => ({
-            value: tokenAccountId,
-            label: <TokenBadge tokenAccountId={tokenAccountId} />,
-          }))
-          .filter(tokenFilter)
-      : [];
+  const tokens = props.tokens;
+
+  const tokenOptions = tokens
+    .map((tokenAccountId) => ({
+      value: tokenAccountId,
+      label: <TokenBadge tokenAccountId={tokenAccountId} />,
+    }))
+    .filter(tokenFilter);
 
   const loadOptions = async (inputValue) => {
     return [
@@ -56,10 +53,17 @@ export default function TokenSelect(props) {
     }
   };
 
+  const value = props.value
+    ? tokenOptions.filter((option) => option.value === props.value)
+    : null;
+
   return (
     <AsyncSelect
       id={props.id}
+      className={props.className}
+      classNamePrefix="react-select"
       cacheOptions
+      value={value}
       styles={selectStyles}
       defaultOptions={tokenOptions}
       loadOptions={loadOptions}
