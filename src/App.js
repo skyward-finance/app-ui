@@ -15,7 +15,10 @@ import { useAccount } from "./data/account";
 import { isTokenRegistered } from "./data/token";
 import SwapPage from "./pages/SwapPage";
 
-function App(props) {
+const swapEnabled = false;
+export const refreshAllowanceObj = {};
+
+export function App(props) {
   const [connected, setConnected] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
   const [signedAccountId, setSignedAccountId] = useState(null);
@@ -47,11 +50,12 @@ function App(props) {
 
   const refreshAllowance = useCallback(async () => {
     alert(
-      "You're out of access key allowance. Need sign in again to refresh it"
+      "You're out of access key allowance. Please sign in again to refresh the allowance"
     );
     await logOut();
     await requestSignIn();
   }, [logOut, requestSignIn]);
+  refreshAllowanceObj.refreshAllowance = refreshAllowance;
 
   useEffect(() => {
     _near.then((near) => {
@@ -200,7 +204,7 @@ function App(props) {
                     </Link>
                   </li>
                 )}
-                {signedIn && (
+                {swapEnabled && signedIn && (
                   <li className="nav-item">
                     <Link
                       className="nav-link"
@@ -253,5 +257,3 @@ function App(props) {
     </div>
   );
 }
-
-export default App;

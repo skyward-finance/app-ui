@@ -101,7 +101,7 @@ export default function Swap(props) {
   const refFinance = useRefFinance();
   const history = useHistory();
 
-  const [loading, setLoading] = useState(false);
+  // const [loading, setLoading] = useState(false);
   const [editMode, setEditMode] = useState(EditMode.None);
 
   const [inTokenAccountId, setInTokenAccountId] = useState(

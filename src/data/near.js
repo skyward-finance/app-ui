@@ -2,6 +2,7 @@ import * as nearAPI from "near-api-js";
 import { singletonHook } from "react-singleton-hook";
 import Big from "big.js";
 import { OneNear } from "./utils";
+import { refreshAllowanceObj } from "../App";
 
 export const TGas = Big(10).pow(12);
 export const MaxGasPerTransaction = TGas.mul(300);
@@ -49,7 +50,8 @@ const MainnetContract = "skyward.near";
 export const MainNearConfig = {
   networkId: "mainnet",
   nodeUrl: "https://rpc.mainnet.near.org",
-  archivalNodeUrl: "https://rpc.mainnet.internal.near.org",
+  // archivalNodeUrl: "https://rpc.mainnet.internal.near.org",
+  archivalNodeUrl: "https://archival-rpc.mainnet.near.org",
   contractName: MainnetContract,
   lockupAccountIds: [...Array(4).keys()].map(
     (i) => `lockup${i}.${MainnetContract}`
@@ -64,6 +66,32 @@ export const MainNearConfig = {
 
 export const NearConfig = IsMainnet ? MainNearConfig : TestNearConfig;
 export const LsKey = NearConfig.contractName + ":v01:";
+
+function wrapContract(account, contractId, options) {
+  const nearContract = new nearAPI.Contract(account, contractId, options);
+  const { viewMethods = [], changeMethods = [] } = options;
+  const contract = {
+    account,
+    contractId,
+  };
+  viewMethods.forEach((methodName) => {
+    contract[methodName] = nearContract[methodName];
+  });
+  changeMethods.forEach((methodName) => {
+    contract[methodName] = async (...args) => {
+      try {
+        return await nearContract[methodName](...args);
+      } catch (e) {
+        const msg = e.toString();
+        if (msg.indexOf("does not have enough balance") !== -1) {
+          return await refreshAllowanceObj.refreshAllowance();
+        }
+        throw e;
+      }
+    };
+  });
+  return contract;
+}
 
 async function _initNear() {
   const keyStore = new nearAPI.keyStores.BrowserLocalStorageKeyStore();
@@ -91,40 +119,36 @@ async function _initNear() {
   _near.accountId = _near.walletConnection.getAccountId();
   _near.account = _near.walletConnection.account();
 
-  _near.contract = new nearAPI.Contract(
-    _near.account,
-    NearConfig.contractName,
-    {
-      viewMethods: [
-        "balance_of",
-        "balances_of",
-        "get_num_balances",
-        "get_subscribed_sales",
-        "get_account_sales",
-        "get_sale",
-        "get_sales",
-        "get_treasury_balance",
-        "get_treasury_balances",
-        "get_treasury_num_balances",
-        "get_skyward_token_id",
-        "get_skyward_circulating_supply",
-        "get_listing_fee",
-      ],
-      changeMethods: [
-        "register_token",
-        "register_tokens",
-        "withdraw_token",
-        "donate_token_to_treasury",
-        "sale_create",
-        "sale_deposit_out_token",
-        "sale_deposit_in_token",
-        "sale_withdraw_in_token",
-        "sale_distribute_unclaimed_tokens",
-        "sale_claim_out_tokens",
-        "redeem_skyward",
-      ],
-    }
-  );
+  _near.contract = wrapContract(_near.account, NearConfig.contractName, {
+    viewMethods: [
+      "balance_of",
+      "balances_of",
+      "get_num_balances",
+      "get_subscribed_sales",
+      "get_account_sales",
+      "get_sale",
+      "get_sales",
+      "get_treasury_balance",
+      "get_treasury_balances",
+      "get_treasury_num_balances",
+      "get_skyward_token_id",
+      "get_skyward_circulating_supply",
+      "get_listing_fee",
+    ],
+    changeMethods: [
+      "register_token",
+      "register_tokens",
+      "withdraw_token",
+      "donate_token_to_treasury",
+      "sale_create",
+      "sale_deposit_out_token",
+      "sale_deposit_in_token",
+      "sale_withdraw_in_token",
+      "sale_distribute_unclaimed_tokens",
+      "sale_claim_out_tokens",
+      "redeem_skyward",
+    ],
+  });
 
   _near.fetchBlockHash = async () => {
     const block = await nearConnection.connection.provider.block({

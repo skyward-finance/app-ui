@@ -19,8 +19,13 @@
     -webkit-appearance: none;
   }
 
+  .form-floating > .form-control:focus, .form-floating > .form-control:not(:placeholder-shown) {
+    padding-top: 1.5rem;
+    padding-bottom: 0;
+  }
+
   .form-floating > .form-control-lg {
-    height: calc(4.5rem + 2px);
+    height: calc(4.0rem + 2px);
   }
 }
 
