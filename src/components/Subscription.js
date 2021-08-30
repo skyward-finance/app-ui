@@ -147,6 +147,28 @@ export default function Subscription(props) {
     sale.outTokens[0]
   );
 
+  const makeOutRegistered = async (actions) => {
+    const outTokens = sale.outTokens.map((o) => o.tokenAccountId);
+    for (let i = 0; i < outTokens.length; i++) {
+      if (
+        !(await isTokenRegistered(account, outTokens[i], account.accountId))
+      ) {
+        actions.push([
+          outTokens[i],
+          nearAPI.transactions.functionCall(
+            "storage_deposit",
+            {
+              account_id: account.accountId,
+              registration_only: true,
+            },
+            TGas.mul(5).toFixed(0),
+            (await tokenStorageDeposit(outTokens[i])).toFixed(0)
+          ),
+        ]);
+      }
+    }
+  };
+
   const subscribeToSale = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -167,7 +189,7 @@ export default function Subscription(props) {
       ? amount.sub(skywardBalance)
       : Big(0);
 
-    await makeOutRegistered(sale, actions);
+    await makeOutRegistered(actions);
 
     if (!(sale.inTokenAccountId in account.balances)) {
       actions.push([
@@ -316,7 +338,7 @@ export default function Subscription(props) {
       )
       .round();
 
-    await makeOutRegistered(sale, actions);
+    await makeOutRegistered(actions);
 
     if (maxWithdraw) {
       amount = maxReceiveAmount;
@@ -396,28 +418,6 @@ export default function Subscription(props) {
     await account.near.sendTransactions(actions);
   };
 
-  const makeOutRegistered = async (sale, actions) => {
-    const outTokens = sale.outTokens.map((o) => o.tokenAccountId);
-    for (let i = 0; i < outTokens.length; i++) {
-      if (
-        !(await isTokenRegistered(account, outTokens[i], account.accountId))
-      ) {
-        actions.push([
-          outTokens[i],
-          nearAPI.transactions.functionCall(
-            "storage_deposit",
-            {
-              account_id: account.accountId,
-              registration_only: true,
-            },
-            TGas.mul(5).toFixed(0),
-            (await tokenStorageDeposit(outTokens[i])).toFixed(0)
-          ),
-        ]);
-      }
-    }
-  };
-
   const claimOut = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -428,7 +428,7 @@ export default function Subscription(props) {
       TGas.mul(60).toFixed(0)
     );
     const actions = [];
-    await makeOutRegistered(sale, actions);
+    await makeOutRegistered(actions);
     const outTokens = sale.outTokens.map((o) => o.tokenAccountId);
     if (actions.length > 0) {
       outTokens.forEach((tokenAccountId) => {
