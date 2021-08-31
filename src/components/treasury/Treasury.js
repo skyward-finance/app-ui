@@ -341,8 +341,12 @@ export default function Treasury(props) {
     await account.near.sendTransactions(actions);
   };
 
-  const positiveBalances = balances.filter((b) => b.usdValue.gt(0));
-  const zeroValueBalances = balances.filter((b) => b.usdValue.eq(0));
+  const whitelistedBalances = balances.filter((b) =>
+    refFinance.whitelistedTokens.has(b.tokenAccountId)
+  );
+  const otherBalances = balances.filter(
+    (b) => !refFinance.whitelistedTokens.has(b.tokenAccountId)
+  );
   const skywardBurned =
     treasury && !treasury.loading
       ? totalVestedAmount.sub(treasury.skywardCirculatingSupply)
@@ -550,15 +554,15 @@ export default function Treasury(props) {
             )}
           </div>
           <hr />
-          {positiveBalances.length > 0 && (
+          {whitelistedBalances.length > 0 && (
             <>
-              <div>Treasury Tokens listed on REF</div>
-              <div>{renderBalances(positiveBalances)}</div>
+              <div>Treasury Tokens whitelisted on REF</div>
+              <div>{renderBalances(whitelistedBalances)}</div>
               <hr />
             </>
           )}
           <div>Other Treasury Tokens</div>
-          <div>{renderBalances(zeroValueBalances)}</div>
+          <div>{renderBalances(otherBalances)}</div>
         </div>
       )}
     </div>
