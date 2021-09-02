@@ -26,7 +26,7 @@ export default function Account(props) {
   ));
   return (
     <>
-      {account.lockupAccount && (
+      {account.lockupAccount && account.lockupAccount.hasBalance && (
         <div className="card mb-2">
           <div className="card-body">
             <h2 className="primary-header">$SKYWARD Lockup</h2>

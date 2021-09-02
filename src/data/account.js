@@ -48,6 +48,8 @@ const mapLockupAccount = (account, lockupAccountId) => {
     account.currentBalance().sub(account.claimedBalance);
   account.remainingBalance = account.balance.sub(account.claimedBalance);
 
+  account.hasBalance = account.remainingBalance.gt(0);
+
   return account;
 };
 
