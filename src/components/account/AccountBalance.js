@@ -150,7 +150,7 @@ export function AccountBalance(props) {
           amount: refBalance.toFixed(0),
           unregister: false,
         },
-        TGas.mul(50).toFixed(0),
+        TGas.mul(70).toFixed(0),
         1
       ),
     ]);
