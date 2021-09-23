@@ -15,7 +15,7 @@ export const SubscribeDeposit = StorageCostPerByte.mul(2000);
 export const CreateSaleDeposit = OneNear.mul(10).add(
   StorageCostPerByte.mul(5000)
 );
-export const MinUsdValue = Big(0.001);
+export const MinUsdValue = Big(0.1);
 
 export const randomPublicKey = nearAPI.utils.PublicKey.from(
   "ed25519:8fWHD35Rjd78yeowShh9GwhRudRtLLsGCRjZtgPjAtw9"

@@ -326,7 +326,9 @@ export default function Subscription(props) {
   const withdrawFromSale = async (e) => {
     e.preventDefault();
     setLoading(true);
-    const maxWithdraw = withdrawAmount.eq(subRemainingInBalanceHuman);
+    const maxWithdraw = withdrawAmount.gte(
+      subRemainingInBalanceHuman.round(6, 0)
+    );
     let amount = withdrawAmountBalance;
     const actions = [];
 

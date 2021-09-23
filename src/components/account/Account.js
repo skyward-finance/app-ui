@@ -39,10 +39,7 @@ export default function Account(props) {
           <div className="card-body">{Loading} loading...</div>
         ) : (
           <div className="card-body">
-            <h2 className="primary-header">Account {account.accountId}</h2>
-            <hr />
-
-            <div>Balances</div>
+            <h2 className="primary-header">Balances</h2>
             <div>{balances}</div>
           </div>
         )}

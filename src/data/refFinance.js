@@ -31,15 +31,14 @@ export const defaultWhitelistedTokens = new Set([
 const defaultRefFinance = {
   loading: true,
   pools: {},
+  poolsByToken: {},
+  poolsByPair: {},
   prices: {},
   balances: {},
   nearPrice: Big(0),
   refContract: null,
   whitelistedTokens: defaultWhitelistedTokens,
 };
-
-const ot = (pool, token) =>
-  token in pool.tokens ? pool.tt[1 - pool.tt.indexOf(token)] : null;
 
 const usdTokens = {
   "6b175474e89094c44da98b954eedeac495271d0f.factory.bridge.near": Big(10).pow(
@@ -54,24 +53,40 @@ const usdTokens = {
 };
 
 export function getRefReturn(pool, tokenIn, amountIn) {
-  if (!amountIn) {
+  if (!amountIn || amountIn.eq(0)) {
     return Big(0);
   }
-  const indexIn = pool.tt.indexOf(tokenIn);
-  if (indexIn < 0) {
+  const tokenOut = pool.ot[tokenIn];
+  if (!tokenOut) {
     return null;
   }
   const balanceIn = pool.tokens[tokenIn];
-  const tokenOut = pool.tt[1 - indexIn];
   const balanceOut = pool.tokens[tokenOut];
-  if (amountIn.eq(0)) {
-    return Big(0);
-  }
   let amountWithFee = Big(amountIn).mul(Big(10000 - pool.fee));
   return amountWithFee
     .mul(balanceOut)
     .div(Big(10000).mul(balanceIn).add(amountWithFee))
     .round(0, 0);
+}
+
+export function getRefInverseReturn(pool, tokenOut, amountOut) {
+  if (!amountOut || amountOut.eq(0)) {
+    return Big(0);
+  }
+  const tokenIn = pool.ot[tokenOut];
+  if (!tokenIn) {
+    return null;
+  }
+  const balanceIn = pool.tokens[tokenIn];
+  const balanceOut = pool.tokens[tokenOut];
+  if (amountOut.gte(balanceOut)) {
+    return null;
+  }
+  return Big(10000)
+    .mul(balanceIn)
+    .mul(amountOut)
+    .div(Big(10000 - pool.fee).mul(balanceOut.sub(amountOut)))
+    .round(0, 3);
 }
 
 const fetchRefData = async (account) => {
@@ -113,6 +128,20 @@ const fetchRefData = async (account) => {
   }
   const rawPools = (await Promise.all(promises)).flat();
 
+  const poolsByToken = {};
+  const poolsByPair = {};
+
+  const addPools = (token, pool) => {
+    let ps = poolsByToken[token] || [];
+    ps.push(pool);
+    poolsByToken[token] = ps;
+
+    const pair = `${token}:${pool.ot[token]}`;
+    ps = poolsByPair[pair] || [];
+    ps.push(pool);
+    poolsByPair[pair] = ps;
+  };
+
   const pools = {};
   rawPools.forEach((pool, i) => {
     if (pool.pool_kind === SimplePool) {
@@ -124,10 +153,18 @@ const fetchRefData = async (account) => {
           acc[token] = Big(pool.amounts[tokenIndex]);
           return acc;
         }, {}),
+        ot: tt.reduce((acc, token, tokenIndex) => {
+          acc[token] = tt[1 - tokenIndex];
+          return acc;
+        }, {}),
         fee: pool.total_fee,
         shares: Big(pool.shares_total_supply),
       };
-      pools[p.index] = p;
+      if (p.shares.gt(0)) {
+        pools[p.index] = p;
+        addPools(p.tt[0], p);
+        addPools(p.tt[1], p);
+      }
     }
   });
 
@@ -136,7 +173,7 @@ const fetchRefData = async (account) => {
 
   Object.values(pools).forEach((pool) => {
     if (wNEAR in pool.tokens) {
-      pool.otherToken = ot(pool, wNEAR);
+      pool.otherToken = pool.ot[wNEAR];
       const p = prices[pool.otherToken] || {
         totalNear: Big(0),
         totalOther: Big(0),
@@ -169,6 +206,8 @@ const fetchRefData = async (account) => {
   return {
     loading: false,
     pools,
+    poolsByToken,
+    poolsByPair,
     nearPrice,
     refContract,
     prices,

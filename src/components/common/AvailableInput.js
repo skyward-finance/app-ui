@@ -1,6 +1,6 @@
 import { bigToString } from "../../data/utils";
 import Big from "big.js";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import uuid from "react-uuid";
 import "./AvailableInput.scss";
 
@@ -14,19 +14,22 @@ export default function AvailableInput(props) {
   const [lastExternalValue, setLastExternalValue] = useState(value);
   const [innerValue, setInnerValue] = useState(value);
 
-  if (value !== lastExternalValue) {
-    setIsMax(false);
-    setLastExternalValue(value);
-    setInnerValue(value);
-  }
+  useEffect(() => {
+    if (value !== lastExternalValue) {
+      setIsMax(false);
+      setLastExternalValue(value);
+      setInnerValue(value);
+    }
+  }, [value, lastExternalValue]);
 
-  if (isMax && !limit.eq(value || Big(0))) {
-    setTimeout(() => {
-      setInnerValue(limit.round(6, 0));
-      setLastExternalValue(limit.round(6, 0));
-      setValue(limit.round(6, 0));
-    }, 1);
-  }
+  useEffect(() => {
+    const roundLimit = limit.round(6, 0);
+    if (isMax && !roundLimit.eq(value || Big(0))) {
+      setInnerValue(roundLimit);
+      setLastExternalValue(roundLimit);
+      setValue(roundLimit);
+    }
+  }, [isMax, value, limit, setValue]);
 
   const isInvalid = (limit || Big(0)).lt(value || Big(0));
   return (

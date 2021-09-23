@@ -360,7 +360,6 @@ export default function Treasury(props) {
       ) : (
         <div className="card-body">
           <h2 className="primary-header">Treasury</h2>
-          <hr />
           <div>
             <TokenAndBalance
               tokenAccountId={NearConfig.skywardTokenAccountId}

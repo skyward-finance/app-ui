@@ -1,5 +1,9 @@
 import { useAccount } from "../../data/account";
-import { getRefReturn, useRefFinance } from "../../data/refFinance";
+import {
+  getRefInverseReturn,
+  getRefReturn,
+  useRefFinance,
+} from "../../data/refFinance";
 import React, { useEffect, useState } from "react";
 import TokenSelect from "../token/TokenSelect";
 import AvailableInput from "../common/AvailableInput";
@@ -17,15 +21,17 @@ import "./Swap.scss";
 import { NearConfig } from "../../data/near";
 import Rate from "../common/Rate";
 import TokenBalance from "../token/TokenBalance";
-import TokenSymbol from "../token/TokenSymbol";
 import { useHistory } from "react-router-dom";
 import MutedDecimals from "../common/MutedDecimals";
+import uuid from "react-uuid";
 
 const EditMode = {
   None: "None",
   Input: "Input",
   Output: "Output",
 };
+
+const Slippage = [0, 0.001, 0.005, 0.02];
 
 const findBestReturn = (
   refFinance,
@@ -39,17 +45,42 @@ const findBestReturn = (
   };
   if (refFinance && !refFinance.loading) {
     // Computing path
-    Object.values(refFinance.pools).forEach((pool) => {
-      if (outTokenAccountId in pool.tokens && inTokenAccountId in pool.tokens) {
+    Object.values(refFinance.poolsByToken[inTokenAccountId]).forEach((pool) => {
+      // 1 token
+      if (outTokenAccountId in pool.tokens) {
         const poolReturn =
           getRefReturn(pool, inTokenAccountId, amountIn) || Big(0);
+
         if (poolReturn.gt(swapInfo.amountOut)) {
           swapInfo = {
             amountIn,
             amountOut: poolReturn,
-            pool,
+            pools: [pool],
           };
         }
+      } else {
+        // 2 tokens
+        const middleTokenAccountId = pool.ot[inTokenAccountId];
+        const pair = `${middleTokenAccountId}:${outTokenAccountId}`;
+        let poolReturn = false;
+        Object.values(refFinance.poolsByPair[pair] || {}).forEach((pool2) => {
+          poolReturn =
+            poolReturn === false
+              ? getRefReturn(pool, inTokenAccountId, amountIn)
+              : poolReturn;
+          if (!poolReturn) {
+            return;
+          }
+          const pool2Return =
+            getRefReturn(pool2, middleTokenAccountId, poolReturn) || Big(0);
+          if (pool2Return.gt(swapInfo.amountOut)) {
+            swapInfo = {
+              amountIn,
+              amountOut: pool2Return,
+              pools: [pool, pool2],
+            };
+          }
+        });
       }
     });
   }
@@ -67,29 +98,70 @@ const findBestInverseReturn = (
   availableInToken,
   outAmount
 ) => {
-  let left = Big(0);
-  let right = availableInToken;
-  let bestSwapInfo = null;
-  for (let i = 0; i < 60; ++i) {
-    const mid = left.add(right).div(2).round(0, 0);
-    const { swapInfo, amountOut } = findBestReturn(
-      refFinance,
-      inTokenAccountId,
-      outTokenAccountId,
-      mid
+  let swapInfo = {
+    amountIn: availableInToken,
+    amountOut: Big(0),
+  };
+  if (refFinance && !refFinance.loading) {
+    // Computing path
+    Object.values(refFinance.poolsByToken[outTokenAccountId]).forEach(
+      (pool) => {
+        // 1 token
+        if (inTokenAccountId in pool.tokens) {
+          const amountIn = getRefInverseReturn(
+            pool,
+            outTokenAccountId,
+            outAmount
+          );
+          if (!amountIn) {
+            return;
+          }
+
+          if (amountIn.lt(swapInfo.amountIn)) {
+            swapInfo = {
+              amountIn,
+              amountOut: outAmount,
+              pools: [pool],
+            };
+          }
+        } else {
+          // 2 tokens
+          const middleTokenAccountId = pool.ot[outTokenAccountId];
+          const pair = `${middleTokenAccountId}:${inTokenAccountId}`;
+          let middleAmountIn = false;
+          Object.values(refFinance.poolsByPair[pair] || {}).forEach((pool2) => {
+            middleAmountIn =
+              middleAmountIn === false
+                ? getRefInverseReturn(pool, outTokenAccountId, outAmount)
+                : middleAmountIn;
+            if (!middleAmountIn) {
+              return;
+            }
+            const amountIn = getRefInverseReturn(
+              pool2,
+              middleTokenAccountId,
+              middleAmountIn
+            );
+            if (!amountIn) {
+              return;
+            }
+            if (amountIn.lt(swapInfo.amountIn)) {
+              swapInfo = {
+                amountIn,
+                amountOut: outAmount,
+                pools: [pool, pool2],
+              };
+            }
+          });
+        }
+      }
     );
-    if (amountOut.gt(outAmount)) {
-      bestSwapInfo = swapInfo;
-      right = mid;
-    } else {
-      left = mid;
-    }
   }
-  bestSwapInfo =
-    bestSwapInfo ||
-    findBestReturn(refFinance, inTokenAccountId, outTokenAccountId, right);
-  bestSwapInfo.expectedAmountOut = outAmount;
-  return bestSwapInfo;
+  return Object.assign(swapInfo, {
+    inTokenAccountId,
+    outTokenAccountId,
+    expectedAmountOut: outAmount,
+  });
 };
 
 const updateUrl = (history, inTokenAccountId, outTokenAccountId) => {
@@ -97,11 +169,14 @@ const updateUrl = (history, inTokenAccountId, outTokenAccountId) => {
 };
 
 export default function Swap(props) {
+  const [gkey] = useState(uuid());
+
   const account = useAccount();
   const refFinance = useRefFinance();
   const history = useHistory();
 
   // const [loading, setLoading] = useState(false);
+  const [maxSlippage, setMaxSlippage] = useState(0.005);
   const [editMode, setEditMode] = useState(EditMode.None);
 
   const [inTokenAccountId, setInTokenAccountId] = useState(
@@ -268,9 +343,9 @@ export default function Swap(props) {
   if (
     refFinance &&
     swapInfo &&
-    swapInfo.pool &&
+    swapInfo.pools &&
     maxSwapInfo &&
-    maxSwapInfo.pool
+    maxSwapInfo.pools
   ) {
     const inputUsdValue = computeUsdBalance(
       refFinance,
@@ -295,119 +370,148 @@ export default function Swap(props) {
     <div className="card mb-2 swap-card">
       <div className="card-body">
         <h2 className="primary-header">Swap</h2>
-        <div className="mb-5">
-          <div className="mb-3">
-            <TokenSelect
-              id="input-token-select"
-              className="token-select"
-              value={inTokenAccountId}
-              tokens={[...tokens]}
-              tokenFilter={(tokenAccountId) =>
-                tokenAccountId !== outTokenAccountId
-              }
-              onSelectTokenId={(v) => {
-                setMaxSwapInfo(null);
-                setSwapInfo(null);
-                updateUrl(history, v, outTokenAccountId);
-                setInTokenAccountId(v);
-              }}
-            />
+        <div className="mb-3">
+          <TokenSelect
+            id="input-token-select"
+            className="token-select"
+            value={inTokenAccountId}
+            tokens={[...tokens]}
+            tokenFilter={(tokenAccountId) =>
+              tokenAccountId !== outTokenAccountId
+            }
+            onSelectTokenId={(v) => {
+              setMaxSwapInfo(null);
+              setSwapInfo(null);
+              updateUrl(history, v, outTokenAccountId);
+              setInTokenAccountId(v);
+            }}
+          />
 
-            <AvailableInput
-              className="mt-1"
-              large
-              autoFocus
-              value={inTokenAmountHuman}
-              setValue={(v) => {
-                setEditMode(EditMode.Input);
-                setInTokenAmountHuman(v);
-              }}
-              limit={availableInTokenHuman}
-              extraLabel={
-                <span className="text-secondary">
-                  {" ("}
-                  <TokenBalance
-                    className="text-secondary"
-                    tokenAccountId={inTokenAccountId}
-                    showUsd
-                    balance={availableInToken}
-                  />
-                  )
-                </span>
-              }
-              extraLabelRight={
-                inTokenAmount &&
-                inTokenAmountHuman && (
-                  <TokenBalance
-                    className="text-secondary"
-                    tokenAccountId={inTokenAccountId}
-                    showUsd
-                    balance={inTokenAmount}
-                  />
+          <AvailableInput
+            className="mt-1"
+            large
+            autoFocus
+            value={inTokenAmountHuman}
+            setValue={(v) => {
+              setEditMode(EditMode.Input);
+              setInTokenAmountHuman(v);
+            }}
+            limit={availableInTokenHuman}
+            extraLabel={
+              <span className="text-secondary">
+                {" ("}
+                <TokenBalance
+                  className="text-secondary"
+                  tokenAccountId={inTokenAccountId}
+                  showUsd
+                  balance={availableInToken}
+                />
                 )
-              }
-            />
-          </div>
-          <div className="text-center mb-2" style={{ position: "relative" }}>
-            <i
-              className="bi bi-arrow-down fs-3 pointer rotate-arrow"
-              onClick={reverseDirection}
-            />
-          </div>
-          <div className="mb-3">
-            <TokenSelect
-              id="output-token-select"
-              className="token-select"
-              value={outTokenAccountId}
-              tokens={[...tokens]}
-              tokenFilter={(tokenAccountId) =>
-                tokenAccountId !== inTokenAccountId
-              }
-              onSelectTokenId={(v) => {
-                setMaxSwapInfo(null);
-                updateUrl(history, inTokenAccountId, v);
-                setOutTokenAccountId(v);
-              }}
-            />
+              </span>
+            }
+            extraLabelRight={
+              inTokenAmount &&
+              inTokenAmountHuman && (
+                <TokenBalance
+                  className="text-secondary"
+                  tokenAccountId={inTokenAccountId}
+                  showUsd
+                  balance={inTokenAmount}
+                />
+              )
+            }
+          />
+        </div>
+        <div className="text-center mb-2" style={{ position: "relative" }}>
+          <i
+            className="bi bi-arrow-down fs-3 pointer rotate-arrow"
+            onClick={reverseDirection}
+          />
+        </div>
+        <div className="mb-3">
+          <TokenSelect
+            id="output-token-select"
+            className="token-select"
+            value={outTokenAccountId}
+            tokens={[...tokens]}
+            tokenFilter={(tokenAccountId) =>
+              tokenAccountId !== inTokenAccountId
+            }
+            onSelectTokenId={(v) => {
+              setMaxSwapInfo(null);
+              updateUrl(history, inTokenAccountId, v);
+              setOutTokenAccountId(v);
+            }}
+          />
 
-            <AvailableInput
-              className="input-group-lg mt-1"
-              value={outTokenAmountHuman}
-              label="Max"
-              large
-              setValue={(v) => {
-                setSwapInfo(null);
-                setEditMode(EditMode.Output);
-                setOutTokenAmountHuman(v);
-              }}
-              limit={availableOutTokenHuman}
-              extraLabel={
-                <span className="text-secondary">
-                  {" ("}
-                  <TokenBalance
-                    className="text-secondary"
-                    tokenAccountId={outTokenAccountId}
-                    showUsd
-                    balance={availableOutToken}
-                  />
-                  )
-                </span>
-              }
-              extraLabelRight={
-                outTokenAmount &&
-                outTokenAmountHuman && (
-                  <TokenBalance
-                    className="text-secondary"
-                    tokenAccountId={outTokenAccountId}
-                    showUsd
-                    balance={outTokenAmount}
-                  />
+          <AvailableInput
+            className="input-group-lg mt-1"
+            value={outTokenAmountHuman}
+            label="Max"
+            large
+            setValue={(v) => {
+              setSwapInfo(null);
+              setEditMode(EditMode.Output);
+              setOutTokenAmountHuman(v);
+            }}
+            limit={availableOutTokenHuman}
+            extraLabel={
+              <span className="text-secondary">
+                {" ("}
+                <TokenBalance
+                  className="text-secondary"
+                  tokenAccountId={outTokenAccountId}
+                  showUsd
+                  balance={availableOutToken}
+                />
                 )
-              }
-            />
+              </span>
+            }
+            extraLabelRight={
+              outTokenAmount &&
+              outTokenAmountHuman && (
+                <TokenBalance
+                  className="text-secondary"
+                  tokenAccountId={outTokenAccountId}
+                  showUsd
+                  balance={outTokenAmount}
+                />
+              )
+            }
+          />
+        </div>
+        <div className="mb-3">
+          <label>Max slippage</label>
+          <div className="row">
+            <div
+              className="btn-group"
+              role="group"
+              aria-label="Slippage toggle"
+            >
+              {Slippage.map((slippage) => {
+                let key = `${gkey}-slippage-${slippage}`;
+                return (
+                  <React.Fragment key={key}>
+                    <input
+                      type="radio"
+                      className="btn-check"
+                      name="btnradio"
+                      id={key}
+                      autoComplete="off"
+                      checked={slippage === maxSlippage}
+                      onChange={() => setMaxSlippage(slippage)}
+                    />
+                    <label
+                      className="btn btn-outline-primary"
+                      htmlFor={key}
+                    >{`${slippage * 100}%`}</label>
+                  </React.Fragment>
+                );
+              })}
+            </div>
           </div>
         </div>
-        {swapInfo && swapInfo.pool && (
+        {swapInfo && swapInfo.pools && (
           <div className="mt-3">
             <h5>Swap details</h5>
             <Rate
@@ -457,81 +561,81 @@ export default function Swap(props) {
             </div>
           </div>
         )}
-        {maxSwapInfo && maxSwapInfo.pool && (
-          <div className="mt-3">
-            <h5>Pool details</h5>
-            <div>
-              <Rate
-                title="Rate"
-                hideInverse
-                inTokenAccountId={maxSwapInfo.inTokenAccountId}
-                inTokenRemaining={
-                  maxSwapInfo.pool.tokens[maxSwapInfo.inTokenAccountId]
-                }
-                outTokens={[
-                  {
-                    remaining:
-                      maxSwapInfo.pool.tokens[maxSwapInfo.outTokenAccountId],
-                    tokenAccountId: maxSwapInfo.outTokenAccountId,
-                  },
-                ]}
-              />
-              <Rate
-                title="Inverse Rate"
-                hideInverse
-                inTokenAccountId={maxSwapInfo.outTokenAccountId}
-                inTokenRemaining={
-                  maxSwapInfo.pool.tokens[maxSwapInfo.outTokenAccountId]
-                }
-                outTokens={[
-                  {
-                    remaining:
-                      maxSwapInfo.pool.tokens[maxSwapInfo.inTokenAccountId],
-                    tokenAccountId: maxSwapInfo.inTokenAccountId,
-                  },
-                ]}
-              />
-            </div>
-            <div className="left-right">
-              <div>Index</div>
-              <div>#{maxSwapInfo.pool.index}</div>
-            </div>
-            <div className="left-right">
-              <div>
-                Liquidity{" "}
-                <b>
-                  <TokenSymbol tokenAccountId={maxSwapInfo.inTokenAccountId} />
-                </b>
-              </div>
-              <div>
-                <TokenBalance
-                  clickable
-                  tokenAccountId={maxSwapInfo.inTokenAccountId}
-                  balance={
-                    maxSwapInfo.pool.tokens[maxSwapInfo.inTokenAccountId]
-                  }
-                />
-              </div>
-            </div>
-            <div className="left-right">
-              <div>
-                Liquidity{" "}
-                <b>
-                  <TokenSymbol tokenAccountId={maxSwapInfo.outTokenAccountId} />
-                </b>
-              </div>
-              <div>
-                <TokenBalance
-                  clickable
-                  tokenAccountId={maxSwapInfo.outTokenAccountId}
-                  balance={
-                    maxSwapInfo.pool.tokens[maxSwapInfo.outTokenAccountId]
-                  }
-                />
-              </div>
-            </div>
-          </div>
-        )}
+        {/*{maxSwapInfo && maxSwapInfo.pools && (*/}
+        {/*  <div className="mt-3">*/}
+        {/*    <h5>Pool details</h5>*/}
+        {/*    <div>*/}
+        {/*      <Rate*/}
+        {/*        title="Rate"*/}
+        {/*        hideInverse*/}
+        {/*        inTokenAccountId={maxSwapInfo.inTokenAccountId}*/}
+        {/*        inTokenRemaining={*/}
+        {/*          maxSwapInfo.pool.tokens[maxSwapInfo.inTokenAccountId]*/}
+        {/*        }*/}
+        {/*        outTokens={[*/}
+        {/*          {*/}
+        {/*            remaining:*/}
+        {/*              maxSwapInfo.pool.tokens[maxSwapInfo.outTokenAccountId],*/}
+        {/*            tokenAccountId: maxSwapInfo.outTokenAccountId,*/}
+        {/*          },*/}
+        {/*        ]}*/}
+        {/*      />*/}
+        {/*      <Rate*/}
+        {/*        title="Inverse Rate"*/}
+        {/*        hideInverse*/}
+        {/*        inTokenAccountId={maxSwapInfo.outTokenAccountId}*/}
+        {/*        inTokenRemaining={*/}
+        {/*          maxSwapInfo.pool.tokens[maxSwapInfo.outTokenAccountId]*/}
+        {/*        }*/}
+        {/*        outTokens={[*/}
+        {/*          {*/}
+        {/*            remaining:*/}
+        {/*              maxSwapInfo.pool.tokens[maxSwapInfo.inTokenAccountId],*/}
+        {/*            tokenAccountId: maxSwapInfo.inTokenAccountId,*/}
+        {/*          },*/}
+        {/*        ]}*/}
+        {/*      />*/}
+        {/*    </div>*/}
+        {/*    <div className="left-right">*/}
+        {/*      <div>Index</div>*/}
+        {/*      <div>#{maxSwapInfo.pool.index}</div>*/}
+        {/*    </div>*/}
+        {/*    <div className="left-right">*/}
+        {/*      <div>*/}
+        {/*        Liquidity{" "}*/}
+        {/*        <b>*/}
+        {/*          <TokenSymbol tokenAccountId={maxSwapInfo.inTokenAccountId} />*/}
+        {/*        </b>*/}
+        {/*      </div>*/}
+        {/*      <div>*/}
+        {/*        <TokenBalance*/}
+        {/*          clickable*/}
+        {/*          tokenAccountId={maxSwapInfo.inTokenAccountId}*/}
+        {/*          balance={*/}
+        {/*            maxSwapInfo.pool.tokens[maxSwapInfo.inTokenAccountId]*/}
+        {/*          }*/}
+        {/*        />*/}
+        {/*      </div>*/}
+        {/*    </div>*/}
+        {/*    <div className="left-right">*/}
+        {/*      <div>*/}
+        {/*        Liquidity{" "}*/}
+        {/*        <b>*/}
+        {/*          <TokenSymbol tokenAccountId={maxSwapInfo.outTokenAccountId} />*/}
+        {/*        </b>*/}
+        {/*      </div>*/}
+        {/*      <div>*/}
+        {/*        <TokenBalance*/}
+        {/*          clickable*/}
+        {/*          tokenAccountId={maxSwapInfo.outTokenAccountId}*/}
+        {/*          balance={*/}
+        {/*            maxSwapInfo.pool.tokens[maxSwapInfo.outTokenAccountId]*/}
+        {/*          }*/}
+        {/*        />*/}
+        {/*      </div>*/}
+        {/*    </div>*/}
+        {/*  </div>*/}
+        {/*)}*/}
       </div>
     </div>
   );
