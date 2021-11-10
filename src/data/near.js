@@ -240,6 +240,23 @@ async function _initNear() {
     );
   };
 
+  _near.viewCall = async (contractId, methodName, args) => {
+    args = args || {};
+    const result = await _near.nearConnection.connection.provider.query({
+      request_type: "call_function",
+      account_id: contractId,
+      method_name: methodName,
+      args_base64: Buffer.from(JSON.stringify(args)).toString("base64"),
+      finality: "optimistic",
+    });
+
+    return (
+      result.result &&
+      result.result.length > 0 &&
+      JSON.parse(Buffer.from(result.result).toString())
+    );
+  };
+
   return _near;
 }
 

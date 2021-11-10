@@ -18,6 +18,10 @@ const AccountSafetyMargin = OneNear.div(2);
 export const skywardUrl = () =>
   window.location.protocol + "//" + window.location.host;
 
+export const hardcodedWhitelist = {
+  50: true,
+};
+
 export const Loading = (
   <span
     className="spinner-grow spinner-grow-sm me-1"
@@ -186,6 +190,9 @@ export const isoDate = (d) =>
   d ? new Date(d).toISOString().substring(0, 10) : "";
 
 export const isSaleWhitelisted = (sale, refFinance) => {
+  if (sale.saleId in hardcodedWhitelist) {
+    return true;
+  }
   if (refFinance && refFinance.whitelistedTokens) {
     if (!refFinance.whitelistedTokens.has(sale.inTokenAccountId)) {
       return false;

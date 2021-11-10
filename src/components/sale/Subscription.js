@@ -34,6 +34,7 @@ import { useSales } from "../../data/sales";
 import { useTokenBalances } from "../../data/tokenBalances";
 import { BalanceType } from "../account/AccountBalance";
 import { useRefFinance } from "../../data/refFinance";
+import { useSalePermission } from "../../data/salePermission";
 
 const DepositMode = "Deposit";
 const WithdrawMode = "Withdrawal";
@@ -52,6 +53,7 @@ export default function Subscription(props) {
   const [allowDepositFromRef, setAllowDepositFromRef] = useState(
     ls.get(allowDepositFromRefLsKey) || true
   );
+
   const sale = props.sale;
   const sales = useSales();
 
@@ -59,6 +61,8 @@ export default function Subscription(props) {
   const inToken = useToken(sale.inTokenAccountId);
 
   const refFinance = useRefFinance();
+
+  const depositPermission = useSalePermission(sale);
 
   const subscription = sale.subscription || {
     claimedOutBalance: sale.outTokens.map(() => Big(0)),
@@ -513,44 +517,66 @@ export default function Subscription(props) {
           )}
           <hr />
           {!mode ? (
-            <div className="flex-buttons">
-              {!sale.ended() && (
-                <button
-                  className={`btn ${
-                    !sale.farAhead() ? "btn-primary" : "btn-outline-primary"
-                  } m-1`}
-                  disabled={loading}
-                  onClick={() => setMode(DepositMode)}
-                >
-                  Deposit <TokenSymbol tokenAccountId={sale.inTokenAccountId} />
-                </button>
+            <>
+              {!sale.ended() && depositPermission === false && (
+                <div className="alert alert-warning">
+                  <b>
+                    Your account doesn't have permission to participate in this
+                    sale
+                  </b>
+                  <br />
+                  Listing URL:{" "}
+                  <a target="_blank" rel="noopener noreferrer" href={sale.url}>
+                    {sale.url}
+                  </a>
+                  <br />
+                  Permissions contract account ID is:{" "}
+                  <b>{sale.permissionsContractId}</b>
+                </div>
               )}
-              {!sale.ended() && (
+              <div className="flex-buttons">
+                {!sale.ended() && (
+                  <>
+                    <button
+                      className={`btn ${
+                        !sale.farAhead() ? "btn-primary" : "btn-outline-primary"
+                      } m-1`}
+                      disabled={loading || !depositPermission}
+                      onClick={() => setMode(DepositMode)}
+                    >
+                      Deposit{" "}
+                      <TokenSymbol tokenAccountId={sale.inTokenAccountId} />
+                    </button>
+
+                    <button
+                      className={`btn btn-outline-primary m-1`}
+                      disabled={
+                        loading || subscription.remainingInBalance.eq(0)
+                      }
+                      onClick={() => setMode(WithdrawMode)}
+                    >
+                      Withdraw{" "}
+                      <TokenSymbol tokenAccountId={sale.inTokenAccountId} />
+                    </button>
+                  </>
+                )}
                 <button
-                  className={`btn btn-outline-primary m-1`}
-                  disabled={loading || subscription.remainingInBalance.eq(0)}
-                  onClick={() => setMode(WithdrawMode)}
+                  className="btn btn-success m-1"
+                  disabled={loading || claimBalance.eq(0)}
+                  onClick={(e) => claimOut(e)}
                 >
-                  Withdraw{" "}
-                  <TokenSymbol tokenAccountId={sale.inTokenAccountId} />
+                  {loading && Loading}
+                  Claim{" "}
+                  <TokenBalance
+                    tokenAccountId={sale.outTokens[0].tokenAccountId}
+                    balance={claimBalance}
+                  />{" "}
+                  <TokenSymbol
+                    tokenAccountId={sale.outTokens[0].tokenAccountId}
+                  />
                 </button>
-              )}
-              <button
-                className="btn btn-success m-1"
-                disabled={loading || claimBalance.eq(0)}
-                onClick={(e) => claimOut(e)}
-              >
-                {loading && Loading}
-                Claim{" "}
-                <TokenBalance
-                  tokenAccountId={sale.outTokens[0].tokenAccountId}
-                  balance={claimBalance}
-                />{" "}
-                <TokenSymbol
-                  tokenAccountId={sale.outTokens[0].tokenAccountId}
-                />
-              </button>
-            </div>
+              </div>
+            </>
           ) : mode === DepositMode ? (
             <div>
               <h5>
