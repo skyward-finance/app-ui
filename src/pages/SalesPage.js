@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { useSales } from "../data/sales";
 import uuid from "react-uuid";
 import SalePreview from "../components/sale/SalePreview";
-import { isSaleWhitelisted, Loading } from "../data/utils";
+import { isLowValueSale, isSaleWhitelisted, Loading } from "../data/utils";
 import { useRefFinance } from "../data/refFinance";
 
 function SalesPage(props) {
@@ -11,13 +11,22 @@ function SalesPage(props) {
   const sales = useSales();
 
   const [whitelistedOnly, setWhitelistedOnly] = useState(true);
+  const [displayLowValueSales, setDisplayLowValueSales] = useState(false);
 
   const refFinance = useRefFinance();
   let sortedSales = [...sales.sales];
   if (refFinance && refFinance.whitelistedTokens && whitelistedOnly) {
-    sortedSales = sortedSales.filter((sale) =>
-      isSaleWhitelisted(sale, refFinance)
-    );
+    if (displayLowValueSales) {
+      sortedSales = sortedSales.filter((sale) =>
+        isSaleWhitelisted(sale, refFinance)
+      );
+    } else {
+      sortedSales = sortedSales.filter(
+        (sale) =>
+          isSaleWhitelisted(sale, refFinance) &&
+          !isLowValueSale(sale, refFinance)
+      );
+    }
   }
   sortedSales.sort((a, b) => a.endDate - b.endDate);
 
@@ -77,6 +86,30 @@ function SalesPage(props) {
                       </span>
                     </label>
                   </div>
+                  {whitelistedOnly && (
+                    <div className="form-check">
+                      <input
+                        className="form-check-input"
+                        type="checkbox"
+                        id="displayLowValueSales"
+                        checked={displayLowValueSales}
+                        onChange={(e) => {
+                          setDisplayLowValueSales(e.target.checked);
+                        }}
+                      />
+                      <label
+                        className="form-check-label"
+                        htmlFor="displayLowValueSales"
+                      >
+                        Display low value sales
+                        <span className="text-muted">
+                          {" "}
+                          (if checked, sales that has a total output value will
+                          be displayed)
+                        </span>
+                      </label>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

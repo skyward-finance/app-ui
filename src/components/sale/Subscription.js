@@ -11,6 +11,7 @@ import {
   fromTokenBalance,
   getCurrentReferralId,
   isBridgeToken,
+  isLowValueSale,
   isSaleWhitelisted,
   Loading,
   tokenStorageDeposit,
@@ -493,6 +494,17 @@ export default function Subscription(props) {
               Don't deposit{" "}
               <TokenSymbol tokenAccountId={sale.inTokenAccountId} /> now. There
               will be enough time to deposit before the sale begins.
+              <br />
+            </div>
+          )}
+          {isLowValueSale(sale, refFinance) && (
+            <div className="alert alert-danger">
+              <b>Warning! The value of listed tokens is very low!</b>
+              <br />
+              Investing in this sale may result in partial lose of funds.
+              <br />
+              Please do your own research before you deposit funds into this
+              listing.
               <br />
             </div>
           )}

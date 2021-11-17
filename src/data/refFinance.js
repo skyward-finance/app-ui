@@ -26,6 +26,16 @@ export const defaultWhitelistedTokens = new Set([
   "514910771af9ca656af840dff83e8264ecf986ca.factory.bridge.near",
   "f5cfbc74057c610c8ef151a439252680ac68c6dc.factory.bridge.near",
   "token.v2.ref-finance.near",
+  "d9c2d319cd7e6177336b0a9c93c21cb48d84fb54.factory.bridge.near",
+  "token.paras.near",
+  "a4ef4b0b23c1fc81d3f9ecf93510e64f58a4a016.factory.bridge.near",
+  "marmaj.tkn.near",
+  "meta-pool.near",
+  "token.cheddar.near",
+  "52a047ee205701895ee06a375492490ec9c597ce.factory.bridge.near",
+  "aurora",
+  "pixeltoken.near",
+  "dbio.near",
 ]);
 
 const defaultRefFinance = {

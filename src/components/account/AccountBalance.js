@@ -19,11 +19,13 @@ export const BalanceType = {
 };
 
 export function AccountBalance(props) {
+  const tokenAccountId = props.tokenAccountId;
   const [loading, setLoading] = useState(false);
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(
+    tokenAccountId === NearConfig.wrapNearAccountId
+  );
   const [balances, setBalances] = useState([]);
 
-  const tokenAccountId = props.tokenAccountId;
   const account = useAccount();
   const token = useToken(tokenAccountId);
 

@@ -15,6 +15,8 @@ export const OneNear = Big(10).pow(24);
 export const OneSkyward = Big(10).pow(18);
 const AccountSafetyMargin = OneNear.div(2);
 
+const LowUsdValue = Big(10000);
+
 export const skywardUrl = () =>
   window.location.protocol + "//" + window.location.host;
 
@@ -205,6 +207,32 @@ export const isSaleWhitelisted = (sale, refFinance) => {
       return false;
     }
     return true;
+  }
+  return false;
+};
+
+export const isLowValueSale = (sale, refFinance) => {
+  if (!isSaleWhitelisted(sale, refFinance)) {
+    return false;
+  }
+  if (refFinance) {
+    let sum = Big(0);
+    sale.outTokens.forEach((outToken) => {
+      const usdBalance = computeUsdBalance(
+        refFinance,
+        outToken.tokenAccountId,
+        outToken.distributed.add(outToken.remaining)
+      );
+      if (sum && usdBalance) {
+        sum = sum.add(usdBalance);
+      } else {
+        sum = null;
+      }
+    });
+
+    if (sum && sum.lte(LowUsdValue)) {
+      return true;
+    }
   }
   return false;
 };
