@@ -22,7 +22,7 @@ import TokenSymbol from "../token/TokenSymbol";
 import AvailableInput from "../common/AvailableInput";
 import { useAccount } from "../../data/account";
 import Big from "big.js";
-import { isTokenRegistered, useToken } from "../../data/token";
+import { isTokenRegistered, useToken, WrappedTokens } from "../../data/token";
 import TokenBalance from "../token/TokenBalance";
 import * as nearAPI from "near-api-js";
 import { defaultWhitelistedTokens, useRefFinance } from "../../data/refFinance";
@@ -139,16 +139,32 @@ export default function Treasury(props) {
       selectedTokens === null &&
       account &&
       account.accountId &&
-      !account.loading
+      !account.loading &&
+      treasury.balances &&
+      !treasury.loading
     ) {
       const refTokens = [...defaultWhitelistedTokens].reduce((a, v) => {
         a[v] = true;
         return a;
       }, {});
 
-      setSelectedTokens(Object.assign(refTokens, account.balances));
+      const selectedTokens = Object.assign(
+        {},
+        WrappedTokens,
+        refTokens,
+        account.balances
+      );
+      Object.keys(selectedTokens).forEach((tokenAccountId) => {
+        if (
+          !(tokenAccountId in treasury.balances) ||
+          treasury.balances[tokenAccountId].eq(0)
+        ) {
+          delete selectedTokens[tokenAccountId];
+        }
+      });
+      setSelectedTokens(selectedTokens);
     }
-  }, [account, selectedTokens]);
+  }, [account, selectedTokens, treasury]);
 
   const receiveBalances = [];
 

@@ -20,10 +20,8 @@ export const BalanceType = {
 
 export function AccountBalance(props) {
   const tokenAccountId = props.tokenAccountId;
+
   const [loading, setLoading] = useState(false);
-  const [expanded, setExpanded] = useState(
-    tokenAccountId === NearConfig.wrapNearAccountId
-  );
   const [balances, setBalances] = useState([]);
 
   const account = useAccount();
@@ -54,8 +52,25 @@ export function AccountBalance(props) {
   const tokenBalance =
     (tokenBalances && tokenBalances[BalanceType.Wallet]) || Big(0);
 
-  const canUnwrap =
-    tokenAccountId === NearConfig.wrapNearAccountId && tokenBalance.gt(0);
+  const [isUnlocked, setIsUnlocked] = useState(null);
+
+  useEffect(() => {
+    if (isUnlocked === null && token && account.near) {
+      if (token.contract.isWrappedToken) {
+        token.contract.isUnlocked(account).then(setIsUnlocked);
+      } else {
+        setIsUnlocked(false);
+      }
+    }
+  }, [isUnlocked, token, account]);
+
+  const canUnwrap = tokenBalance.gt(0) && isUnlocked;
+
+  const [expanded, setExpanded] = useState(false);
+
+  useEffect(() => {
+    setExpanded(canUnwrap);
+  }, [canUnwrap]);
 
   const clickable =
     props.clickable && (internalBalance.gt(0) || refBalance.gt(0) || canUnwrap);

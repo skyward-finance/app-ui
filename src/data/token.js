@@ -20,6 +20,16 @@ export const isTokenRegistered = async (account, tokenAccountId, accountId) => {
   return storageBalance && storageBalance.total !== "0";
 };
 
+export const WrappedTokenType = {
+  WrappedNEAR: "WrappedNEAR",
+  WrappedFT: "WrappedFT",
+};
+
+export const WrappedTokens = {
+  [NearConfig.wrapNearAccountId]: WrappedTokenType.WrappedNEAR,
+  "f-aurora.near": WrappedTokenType.WrappedFT,
+};
+
 // const tokenBalances = {};
 
 const hardcodedMetadata = (token, tokenAccountId) => {
@@ -69,6 +79,22 @@ export const getTokenFetcher = async (_key, tokenAccountId, account) => {
     },
     isRegistered: async (account, accountId) =>
       isTokenRegistered(account, tokenAccountId, accountId),
+    isWrappedToken: tokenAccountId in WrappedTokens,
+    isUnlocked: async (account) => {
+      if (WrappedTokens[tokenAccountId] === WrappedTokenType.WrappedNEAR) {
+        return true;
+      }
+      if (WrappedTokens[tokenAccountId] === WrappedTokenType.WrappedFT) {
+        const info = await account.near.account.viewFunction(
+          tokenAccountId,
+          "get_info"
+        );
+        if (!info) {
+          return false;
+        }
+        return info.status === "Unlocked";
+      }
+    },
   };
 
   if (localToken && localToken.expires > time) {
