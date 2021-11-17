@@ -3,9 +3,14 @@ import React, { useEffect, useState } from "react";
 import TokenAndBalance from "../token/TokenAndBalance";
 import { useAccount } from "../../data/account";
 import TokenSymbol from "../token/TokenSymbol";
-import { useToken } from "../../data/token";
+import {
+  tokenRegisterStorageAction,
+  useToken,
+  WrappedTokens,
+  WrappedTokenType,
+} from "../../data/token";
 import { NearConfig, TGas } from "../../data/near";
-import { Loading, tokenStorageDeposit } from "../../data/utils";
+import { keysToCamel, Loading } from "../../data/utils";
 import * as nearAPI from "near-api-js";
 import TokenBalance from "../token/TokenBalance";
 import Big from "big.js";
@@ -75,40 +80,47 @@ export function AccountBalance(props) {
   const clickable =
     props.clickable && (internalBalance.gt(0) || refBalance.gt(0) || canUnwrap);
 
-  const registerAction = async (actions) => {
-    if (!(await token.contract.isRegistered(account, account.accountId))) {
-      actions.push([
-        tokenAccountId,
-        nearAPI.transactions.functionCall(
-          "storage_deposit",
-          {
-            account_id: account.accountId,
-            registration_only: true,
-          },
-          TGas.mul(5).toFixed(0),
-          (await tokenStorageDeposit(tokenAccountId)).toFixed(0)
-        ),
-      ]);
-    }
-  };
+  const registerAction = (actions) =>
+    tokenRegisterStorageAction(account, tokenAccountId, actions);
 
-  const unwrapNearAction = async (actions, balance) => {
-    if (tokenAccountId === NearConfig.wrapNearAccountId) {
-      const tokenBalance = await token.contract.balanceOf(
-        account,
-        account.accountId
-      );
-      actions.push([
-        NearConfig.wrapNearAccountId,
-        nearAPI.transactions.functionCall(
-          "near_withdraw",
-          {
-            amount: tokenBalance.add(balance).toFixed(0),
-          },
-          TGas.mul(10).toFixed(0),
-          1
-        ),
-      ]);
+  const unwrapTokenAction = async (actions, balance) => {
+    if (canUnwrap) {
+      if (WrappedTokens[tokenAccountId] === WrappedTokenType.WrappedNEAR) {
+        const tokenBalance = await token.contract.balanceOf(
+          account,
+          account.accountId
+        );
+        actions.push([
+          NearConfig.wrapNearAccountId,
+          nearAPI.transactions.functionCall(
+            "near_withdraw",
+            {
+              amount: tokenBalance.add(balance).toFixed(0),
+            },
+            TGas.mul(10).toFixed(0),
+            1
+          ),
+        ]);
+      } else if (WrappedTokens[tokenAccountId] === WrappedTokenType.WrappedFT) {
+        const info = keysToCamel(
+          await account.near.account.viewFunction(tokenAccountId, "get_info")
+        );
+        const lockedTokenAccountId = info.lockedTokenAccountId;
+        await tokenRegisterStorageAction(
+          account,
+          lockedTokenAccountId,
+          actions
+        );
+        actions.push([
+          tokenAccountId,
+          nearAPI.transactions.functionCall(
+            "unwrap",
+            {},
+            TGas.mul(50).toFixed(0),
+            1
+          ),
+        ]);
+      }
     }
   };
 
@@ -131,7 +143,7 @@ export function AccountBalance(props) {
       ),
     ]);
 
-    await unwrapNearAction(actions, internalBalance);
+    await unwrapTokenAction(actions, internalBalance);
 
     if (actions.length === 1) {
       // simple
@@ -172,18 +184,18 @@ export function AccountBalance(props) {
       ),
     ]);
 
-    await unwrapNearAction(actions, refBalance);
+    await unwrapTokenAction(actions, refBalance);
     await account.near.sendTransactions(actions);
   };
 
-  const unwrapNear = async (e) => {
+  const unwrapToken = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     const actions = [];
     await registerAction(actions);
 
-    await unwrapNearAction(actions, Big(0));
+    await unwrapTokenAction(actions, Big(0));
     await account.near.sendTransactions(actions);
   };
 
@@ -232,7 +244,7 @@ export function AccountBalance(props) {
             <button
               className="btn btn-primary m-1"
               disabled={!canUnwrap || loading}
-              onClick={(e) => unwrapNear(e)}
+              onClick={(e) => unwrapToken(e)}
             >
               {loading && Loading}
               Unwrap{" "}

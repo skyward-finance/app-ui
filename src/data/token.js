@@ -1,9 +1,10 @@
 import Big from "big.js";
 import ls from "local-storage";
-import { isValidAccountId, keysToCamel } from "./utils";
+import { isValidAccountId, keysToCamel, tokenStorageDeposit } from "./utils";
 import useSWR from "swr";
 import { useAccount } from "./account";
-import { LsKey, NearConfig } from "./near";
+import { LsKey, NearConfig, TGas } from "./near";
+import * as nearAPI from "near-api-js";
 
 const TokenExpirationDuration = 30 * 60 * 1000;
 
@@ -18,6 +19,27 @@ export const isTokenRegistered = async (account, tokenAccountId, accountId) => {
     }
   );
   return storageBalance && storageBalance.total !== "0";
+};
+
+export const tokenRegisterStorageAction = async (
+  account,
+  tokenAccountId,
+  actions
+) => {
+  if (!(await isTokenRegistered(account, tokenAccountId, account.accountId))) {
+    actions.push([
+      tokenAccountId,
+      nearAPI.transactions.functionCall(
+        "storage_deposit",
+        {
+          account_id: account.accountId,
+          registration_only: true,
+        },
+        TGas.mul(5).toFixed(0),
+        (await tokenStorageDeposit(tokenAccountId)).toFixed(0)
+      ),
+    ]);
+  }
 };
 
 export const WrappedTokenType = {
