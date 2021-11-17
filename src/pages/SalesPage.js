@@ -104,8 +104,8 @@ function SalesPage(props) {
                         Display low value sales
                         <span className="text-muted">
                           {" "}
-                          (if checked, sales that has a total output value will
-                          be displayed)
+                          (if checked, sales with low total output value will be
+                          displayed)
                         </span>
                       </label>
                     </div>
