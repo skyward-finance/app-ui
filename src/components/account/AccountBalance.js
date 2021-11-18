@@ -58,10 +58,12 @@ export function AccountBalance(props) {
     (tokenBalances && tokenBalances[BalanceType.Wallet]) || Big(0);
 
   const [isUnlocked, setIsUnlocked] = useState(null);
+  const [isUnwrappable, setIsUnwrappable] = useState(false);
 
   useEffect(() => {
     if (isUnlocked === null && token && account.near) {
       if (token.contract.isWrappedToken) {
+        setIsUnwrappable(true);
         token.contract.isUnlocked(account).then(setIsUnlocked);
       } else {
         setIsUnlocked(false);
@@ -70,15 +72,17 @@ export function AccountBalance(props) {
   }, [isUnlocked, token, account]);
 
   const canUnwrap = tokenBalance.gt(0) && isUnlocked;
+  const unwrapPossible = tokenBalance.gt(0) && isUnwrappable;
 
   const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
-    setExpanded(canUnwrap);
-  }, [canUnwrap]);
+    setExpanded(unwrapPossible);
+  }, [unwrapPossible]);
 
   const clickable =
-    props.clickable && (internalBalance.gt(0) || refBalance.gt(0) || canUnwrap);
+    props.clickable &&
+    (internalBalance.gt(0) || refBalance.gt(0) || unwrapPossible);
 
   const registerAction = (actions) =>
     tokenRegisterStorageAction(account, tokenAccountId, actions);
@@ -240,7 +244,7 @@ export function AccountBalance(props) {
               to wallet
             </button>
           )}
-          {canUnwrap && (
+          {unwrapPossible && (
             <button
               className="btn btn-primary m-1"
               disabled={!canUnwrap || loading}
