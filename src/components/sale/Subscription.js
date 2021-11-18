@@ -603,6 +603,20 @@ export default function Subscription(props) {
                     balance={subscription.unclaimedOutBalances[0]}
                   />
                 </span>{" "}
+                <span className="text-muted">
+                  (once the sale starts{" "}
+                  <span className="font-monospace">
+                    <TokenSymbol tokenAccountId={sale.inTokenAccountId} />
+                  </span>{" "}
+                  will be exchanging to{" "}
+                  <span className="font-monospace">
+                    <TokenSymbol
+                      tokenAccountId={sale.outTokens[0].tokenAccountId}
+                      balance={subscription.unclaimedOutBalances[0]}
+                    />
+                  </span>
+                  )
+                </span>
               </h5>
               <AvailableInput
                 value={extraDeposit}
@@ -645,7 +659,12 @@ export default function Subscription(props) {
                 >
                   {loading && Loading}
                   Deposit {extraDeposit && bigToString(extraDeposit)}{" "}
-                  <TokenSymbol tokenAccountId={sale.inTokenAccountId} />
+                  <TokenSymbol tokenAccountId={sale.inTokenAccountId} /> to
+                  exchange for{" "}
+                  <TokenSymbol
+                    tokenAccountId={sale.outTokens[0].tokenAccountId}
+                    balance={subscription.unclaimedOutBalances[0]}
+                  />
                 </button>
                 <button
                   className="btn btn-secondary float-end m-1"
