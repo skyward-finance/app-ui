@@ -23,11 +23,13 @@ export default function AvailableInput(props) {
   }, [value, lastExternalValue]);
 
   useEffect(() => {
-    const roundLimit = limit.round(6, 0);
-    if (isMax && !roundLimit.eq(value || Big(0))) {
-      setInnerValue(roundLimit);
-      setLastExternalValue(roundLimit);
-      setValue(roundLimit);
+    if (limit) {
+      const roundLimit = limit.round(6, 0);
+      if (isMax && !roundLimit.eq(value || Big(0))) {
+        setInnerValue(roundLimit);
+        setLastExternalValue(roundLimit);
+        setValue(roundLimit);
+      }
     }
   }, [isMax, value, limit, setValue]);
 

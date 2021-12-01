@@ -10,6 +10,18 @@ const TokenExpirationDuration = 30 * 60 * 1000;
 
 const tokens = {};
 
+export const tokenMatches = (tokenAccountId, label) => {
+  const token = tokens[tokenAccountId];
+  if (!token || !label) {
+    return false;
+  }
+  label = label.toLowerCase();
+  if (token.metadata.symbol.toLowerCase().indexOf(label) >= 0) {
+    return true;
+  }
+  return token.metadata.name.toLowerCase().indexOf(label) >= 0;
+};
+
 export const isTokenRegistered = async (account, tokenAccountId, accountId) => {
   const storageBalance = await account.near.account.viewFunction(
     tokenAccountId,

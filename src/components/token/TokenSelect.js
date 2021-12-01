@@ -2,6 +2,7 @@ import React from "react";
 import AsyncSelect from "react-select/async";
 import TokenBadge from "./TokenBadge";
 import "./TokenSelect.scss";
+import { tokenMatches } from "../../data/token";
 
 const selectStyles = {
   singleValue: (provided, state) => ({
@@ -39,7 +40,12 @@ export default function TokenSelect(props) {
         value: inputValue,
         label: <TokenBadge tokenAccountId={inputValue} />,
       },
-      ...tokenOptions.filter((option) => option.value !== inputValue),
+      ...tokenOptions.filter((option) => {
+        if (option.value === inputValue) {
+          return false;
+        }
+        return tokenMatches(option.value, inputValue);
+      }),
     ].filter(tokenFilter);
   };
 
