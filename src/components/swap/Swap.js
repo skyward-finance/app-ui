@@ -14,16 +14,19 @@ import {
   bigToString,
   computeUsdBalance,
   fromTokenBalance,
+  Loading,
   toTokenBalance,
 } from "../../data/utils";
-import { useToken } from "../../data/token";
+import { tokenRegisterStorageAction, useToken } from "../../data/token";
 import "./Swap.scss";
-import { NearConfig } from "../../data/near";
+import { NearConfig, TGas } from "../../data/near";
 import Rate from "../common/Rate";
 import TokenBalance from "../token/TokenBalance";
 import { useHistory } from "react-router-dom";
 import MutedDecimals from "../common/MutedDecimals";
 import uuid from "react-uuid";
+import TokenSymbol from "../token/TokenSymbol";
+import * as nearAPI from "near-api-js";
 
 const EditMode = {
   None: "None",
@@ -149,7 +152,7 @@ const findBestInverseReturn = (
               swapInfo = {
                 amountIn,
                 amountOut: outAmount,
-                pools: [pool, pool2],
+                pools: [pool2, pool],
               };
             }
           });
@@ -175,7 +178,7 @@ export default function Swap(props) {
   const refFinance = useRefFinance();
   const history = useHistory();
 
-  // const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [maxSlippage, setMaxSlippage] = useState(0.005);
   const [editMode, setEditMode] = useState(EditMode.None);
 
@@ -195,8 +198,8 @@ export default function Swap(props) {
           availableInToken = availableInToken.add(balance);
         }
       });
+      setAvailableInToken(availableInToken);
     }
-    setAvailableInToken(availableInToken);
   }, [tokenBalances]);
 
   const availableInTokenHuman = fromTokenBalance(inToken, availableInToken);
@@ -208,7 +211,14 @@ export default function Swap(props) {
   const [outTokenAmountHuman, setOutTokenAmountHuman] = useState(null);
 
   const [availableOutToken, setAvailableOutToken] = useState(Big(0));
-  const [maxSwapInfo, setMaxSwapInfo] = useState(null);
+  const [needRecompute, setNeedRecompute] = useState(true);
+
+  useEffect(() => {
+    if (refFinance && !refFinance.loading) {
+      refFinance.scheduleRefresh(true);
+      setNeedRecompute(true);
+    }
+  }, [refFinance]);
 
   useEffect(() => {
     const swapInfo = findBestReturn(
@@ -217,7 +227,6 @@ export default function Swap(props) {
       outTokenAccountId,
       availableInToken
     );
-    setMaxSwapInfo(swapInfo);
     setAvailableOutToken(swapInfo.amountOut);
   }, [availableInToken, refFinance, inTokenAccountId, outTokenAccountId]);
 
@@ -250,7 +259,8 @@ export default function Swap(props) {
   }, [editMode, availableOutToken, outToken, outTokenAmountHuman]);
 
   useEffect(() => {
-    const needRecompute =
+    const willRecompute =
+      needRecompute ||
       swapInfo === null ||
       (editMode === EditMode.Input &&
         !swapInfo.amountIn.eq(inTokenAmount || Big(0))) ||
@@ -258,7 +268,8 @@ export default function Swap(props) {
         !swapInfo.expectedAmountOut.eq(outTokenAmount || Big(0))) ||
       swapInfo.inTokenAccountId !== inTokenAccountId ||
       swapInfo.outTokenAccountId !== outTokenAccountId;
-    if (editMode === EditMode.Input && inTokenAmount && needRecompute) {
+    setNeedRecompute(false);
+    if (editMode === EditMode.Input && inTokenAmount && willRecompute) {
       const swapInfo = findBestReturn(
         refFinance,
         inTokenAccountId,
@@ -274,7 +285,7 @@ export default function Swap(props) {
     } else if (
       editMode === EditMode.Output &&
       outTokenAmount &&
-      needRecompute
+      willRecompute
     ) {
       const swapInfo = findBestInverseReturn(
         refFinance,
@@ -292,6 +303,7 @@ export default function Swap(props) {
     }
   }, [
     editMode,
+    needRecompute,
     swapInfo,
     refFinance,
     inTokenAccountId,
@@ -305,25 +317,34 @@ export default function Swap(props) {
     outTokenAmountHuman,
   ]);
 
-  const tokens = [
-    ...new Set([
-      ...Object.keys(
-        Object.assign(
-          {},
-          account && !account.loading ? account.balances : {},
-          refFinance ? refFinance.balances : {}
-        )
-      ),
-      ...(refFinance ? refFinance.whitelistedTokens : []),
-    ]),
-  ].filter(
-    (tokenId) =>
-      tokenId === NearConfig.wrapNearAccountId ||
-      (refFinance && tokenId in refFinance.prices)
-  );
+  const [tokens, setTokens] = useState([]);
+
+  useEffect(() => {
+    setTokens(
+      [
+        ...new Set([
+          ...Object.keys(
+            Object.assign(
+              {},
+              account && !account.loading ? account.balances : {},
+              refFinance ? refFinance.balances : {}
+            )
+          ),
+          ...(refFinance ? refFinance.whitelistedTokens : []),
+        ]),
+      ].filter(
+        (tokenId) =>
+          tokenId === NearConfig.wrapNearAccountId ||
+          (refFinance && tokenId in refFinance.prices)
+      )
+    );
+  }, [refFinance, account]);
 
   const reverseDirection = (e) => {
     e.preventDefault();
+    if (loading) {
+      return;
+    }
     setInTokenAccountId(outTokenAccountId);
     setInTokenAmountHuman(outTokenAmountHuman);
     setInTokenAmount(outTokenAmount);
@@ -335,18 +356,14 @@ export default function Swap(props) {
     } else if (editMode === EditMode.Output) {
       setEditMode(EditMode.Input);
     }
+    setNeedRecompute(true);
     updateUrl(history, outTokenAccountId, inTokenAccountId);
   };
 
   let priceImpact = Big(0);
   let priceImpactDiff = Big(0);
-  if (
-    refFinance &&
-    swapInfo &&
-    swapInfo.pools &&
-    maxSwapInfo &&
-    maxSwapInfo.pools
-  ) {
+  let swapPath = [];
+  if (refFinance && swapInfo && swapInfo.pools) {
     const inputUsdValue = computeUsdBalance(
       refFinance,
       swapInfo.inTokenAccountId,
@@ -364,279 +381,314 @@ export default function Swap(props) {
         : Big(0);
 
     priceImpactDiff = outputUsdValue.sub(inputUsdValue);
+
+    swapPath.push(swapInfo.inTokenAccountId);
+    swapInfo.pools.forEach((pool) => {
+      const nextTokenId = pool.ot[swapPath[swapPath.length - 1]];
+      if (!nextTokenId) {
+        console.log(swapInfo);
+      }
+      swapPath.push(nextTokenId);
+    });
   }
 
+  const swap = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    const actions = [];
+    await tokenRegisterStorageAction(
+      account,
+      swapInfo.outTokenAccountId,
+      actions
+    );
+
+    let tokenId = swapInfo.inTokenAccountId;
+
+    actions.push([
+      swapInfo.inTokenAccountId,
+      nearAPI.transactions.functionCall(
+        "ft_transfer_call",
+        {
+          receiver_id: NearConfig.refContractName,
+          amount: swapInfo.amountIn.toFixed(0),
+          msg: JSON.stringify({
+            referral_id: NearConfig.referralId,
+            actions: swapInfo.pools.map((pool) => {
+              const tokenIn = tokenId;
+              tokenId = pool.ot[tokenIn];
+              return {
+                pool_id: pool.index,
+                token_in: tokenIn,
+                token_out: tokenId,
+                min_amount_out:
+                  tokenId === swapInfo.outTokenAccountId
+                    ? swapInfo.amountOut
+                        .mul(1.0 - maxSlippage)
+                        .round(0, 0)
+                        .toFixed(0)
+                    : "0",
+              };
+            }),
+          }),
+        },
+        TGas.mul(250).toFixed(0),
+        1
+      ),
+    ]);
+
+    await account.near.sendTransactions(actions);
+  };
+
   return (
-    <div className="card mb-2 swap-card">
-      <div className="card-body">
-        <h2 className="primary-header">Swap</h2>
-        <div className="mb-3">
-          <TokenSelect
-            id="input-token-select"
-            className="token-select"
-            value={inTokenAccountId}
-            tokens={[...tokens]}
-            tokenFilter={(tokenAccountId) =>
-              tokenAccountId !== outTokenAccountId
-            }
-            onSelectTokenId={(v) => {
-              setMaxSwapInfo(null);
-              setSwapInfo(null);
-              updateUrl(history, v, outTokenAccountId);
-              setInTokenAccountId(v);
-            }}
-          />
+    <>
+      <div className="alert alert-warning">
+        <b>
+          Warning! The swap feature is still in development. It may contain bugs
+          and may result in partial loss of funds.
+        </b>
+        <br />
+        This UI allows to swap any two tokens and also finds the best available
+        execution path to maximize return.
+        <br />
+        The trades are executed on REF Finance contract using Instant swap
+        feature.
+        <br />
+        Please report any issues to{" "}
+        <a
+          target="_blank"
+          rel="noopener noreferrer"
+          href="https://t.me/skywardfinance"
+        >
+          Skyward Flight
+        </a>{" "}
+        telegram.
+      </div>
+      <div className="card mb-2 swap-card">
+        <div className="card-body">
+          <h2 className="primary-header">[BETA] Swap</h2>
+          <div className="mb-3">
+            <TokenSelect
+              id="input-token-select"
+              className="token-select"
+              disabled={loading}
+              value={inTokenAccountId}
+              tokens={[...tokens]}
+              tokenFilter={(tokenAccountId) =>
+                tokenAccountId !== outTokenAccountId
+              }
+              onSelectTokenId={(v) => {
+                setNeedRecompute(true);
+                updateUrl(history, v, outTokenAccountId);
+                setInTokenAccountId(v);
+              }}
+            />
 
-          <AvailableInput
-            className="mt-1"
-            large
-            autoFocus
-            value={inTokenAmountHuman}
-            setValue={(v) => {
-              setEditMode(EditMode.Input);
-              setInTokenAmountHuman(v);
-            }}
-            limit={availableInTokenHuman}
-            extraLabel={
-              <span className="text-secondary">
-                {" ("}
-                <TokenBalance
-                  className="text-secondary"
-                  tokenAccountId={inTokenAccountId}
-                  showUsd
-                  balance={availableInToken}
-                />
+            <AvailableInput
+              className="mt-1"
+              disabled={loading}
+              large
+              autoFocus
+              value={inTokenAmountHuman}
+              setValue={(v) => {
+                setEditMode(EditMode.Input);
+                setInTokenAmountHuman(v);
+              }}
+              limit={availableInTokenHuman}
+              extraLabel={
+                <span className="text-secondary">
+                  {" ("}
+                  <TokenBalance
+                    className="text-secondary"
+                    tokenAccountId={inTokenAccountId}
+                    showUsd
+                    balance={availableInToken}
+                  />
+                  )
+                </span>
+              }
+              extraLabelRight={
+                inTokenAmount &&
+                inTokenAmountHuman && (
+                  <TokenBalance
+                    className="text-secondary"
+                    tokenAccountId={inTokenAccountId}
+                    showUsd
+                    balance={inTokenAmount}
+                  />
                 )
-              </span>
-            }
-            extraLabelRight={
-              inTokenAmount &&
-              inTokenAmountHuman && (
-                <TokenBalance
-                  className="text-secondary"
-                  tokenAccountId={inTokenAccountId}
-                  showUsd
-                  balance={inTokenAmount}
-                />
-              )
-            }
-          />
-        </div>
-        <div className="text-center mb-2" style={{ position: "relative" }}>
-          <i
-            className="bi bi-arrow-down fs-3 pointer rotate-arrow"
-            onClick={reverseDirection}
-          />
-        </div>
-        <div className="mb-3">
-          <TokenSelect
-            id="output-token-select"
-            className="token-select"
-            value={outTokenAccountId}
-            tokens={[...tokens]}
-            tokenFilter={(tokenAccountId) =>
-              tokenAccountId !== inTokenAccountId
-            }
-            onSelectTokenId={(v) => {
-              setMaxSwapInfo(null);
-              updateUrl(history, inTokenAccountId, v);
-              setOutTokenAccountId(v);
-            }}
-          />
-
-          <AvailableInput
-            className="input-group-lg mt-1"
-            value={outTokenAmountHuman}
-            label="Max"
-            large
-            setValue={(v) => {
-              setSwapInfo(null);
-              setEditMode(EditMode.Output);
-              setOutTokenAmountHuman(v);
-            }}
-            limit={availableOutTokenHuman}
-            extraLabel={
-              <span className="text-secondary">
-                {" ("}
-                <TokenBalance
-                  className="text-secondary"
-                  tokenAccountId={outTokenAccountId}
-                  showUsd
-                  balance={availableOutToken}
-                />
-                )
-              </span>
-            }
-            extraLabelRight={
-              outTokenAmount &&
-              outTokenAmountHuman && (
-                <TokenBalance
-                  className="text-secondary"
-                  tokenAccountId={outTokenAccountId}
-                  showUsd
-                  balance={outTokenAmount}
-                />
-              )
-            }
-          />
-        </div>
-        <div className="mb-3">
-          <label>Max slippage</label>
-          <div className="row">
-            <div
-              className="btn-group"
-              role="group"
-              aria-label="Slippage toggle"
-            >
-              {Slippage.map((slippage) => {
-                let key = `${gkey}-slippage-${slippage}`;
-                return (
-                  <React.Fragment key={key}>
-                    <input
-                      type="radio"
-                      className="btn-check"
-                      name="btnradio"
-                      id={key}
-                      autoComplete="off"
-                      checked={slippage === maxSlippage}
-                      onChange={() => setMaxSlippage(slippage)}
-                    />
-                    <label
-                      className="btn btn-outline-primary"
-                      htmlFor={key}
-                    >{`${slippage * 100}%`}</label>
-                  </React.Fragment>
-                );
-              })}
-            </div>
+              }
+            />
           </div>
-        </div>
-        {swapInfo && swapInfo.pools && (
-          <div className="mt-3">
-            <h5>Swap details</h5>
-            <Rate
-              title="Rate"
-              hideInverse
-              inTokenAccountId={swapInfo.inTokenAccountId}
-              inTokenRemaining={swapInfo.amountIn}
-              outTokens={[
-                {
-                  remaining: swapInfo.amountOut,
-                  tokenAccountId: swapInfo.outTokenAccountId,
-                },
-              ]}
+          <div className="text-center mb-2" style={{ position: "relative" }}>
+            <i
+              className="bi bi-arrow-down fs-3 pointer rotate-arrow"
+              onClick={reverseDirection}
             />
-            <Rate
-              title="Inverse Rate"
-              hideInverse
-              inTokenAccountId={swapInfo.outTokenAccountId}
-              inTokenRemaining={swapInfo.amountOut}
-              outTokens={[
-                {
-                  remaining: swapInfo.amountIn,
-                  tokenAccountId: swapInfo.inTokenAccountId,
-                },
-              ]}
+          </div>
+          <div className="mb-3">
+            <TokenSelect
+              id="output-token-select"
+              disabled={loading}
+              className="token-select"
+              value={outTokenAccountId}
+              tokens={[...tokens]}
+              tokenFilter={(tokenAccountId) =>
+                tokenAccountId !== inTokenAccountId
+              }
+              onSelectTokenId={(v) => {
+                setNeedRecompute(true);
+                updateUrl(history, inTokenAccountId, v);
+                setOutTokenAccountId(v);
+              }}
             />
-            <div className="left-right">
-              <div>Price Impact</div>
-              <div className="font-monospace">
-                <span className="fw-bold">
-                  <MutedDecimals value={bigToString(priceImpactDiff, 2)} />
-                  {"$ "}
+
+            <AvailableInput
+              className="input-group-lg mt-1"
+              value={outTokenAmountHuman}
+              disabled={loading}
+              label="Max"
+              large
+              setValue={(v) => {
+                setNeedRecompute(true);
+                setEditMode(EditMode.Output);
+                setOutTokenAmountHuman(v);
+              }}
+              limit={availableOutTokenHuman}
+              extraLabel={
+                <span className="text-secondary">
+                  {" ("}
+                  <TokenBalance
+                    className="text-secondary"
+                    tokenAccountId={outTokenAccountId}
+                    showUsd
+                    balance={availableOutToken}
+                  />
+                  )
                 </span>
-                <span
-                  className={
-                    "text-secondary " +
-                    (priceImpact.lt(-0.02)
-                      ? "fw-bold text-danger"
-                      : priceImpact.lt(-0.005)
-                      ? "fw-bold text-warning"
-                      : "")
-                  }
-                >
-                  ({bigToString(priceImpact.mul(100), 2)}%)
-                </span>
+              }
+              extraLabelRight={
+                outTokenAmount &&
+                outTokenAmountHuman && (
+                  <TokenBalance
+                    className="text-secondary"
+                    tokenAccountId={outTokenAccountId}
+                    showUsd
+                    balance={outTokenAmount}
+                  />
+                )
+              }
+            />
+          </div>
+          <div className="mb-3">
+            <label>Max slippage</label>
+            <div className="row">
+              <div
+                className="btn-group"
+                role="group"
+                aria-label="Slippage toggle"
+              >
+                {Slippage.map((slippage) => {
+                  let key = `${gkey}-slippage-${slippage}`;
+                  return (
+                    <React.Fragment key={key}>
+                      <input
+                        type="radio"
+                        className="btn-check"
+                        name="btnradio"
+                        id={key}
+                        disabled={loading}
+                        autoComplete="off"
+                        checked={slippage === maxSlippage}
+                        onChange={() => setMaxSlippage(slippage)}
+                      />
+                      <label
+                        className="btn btn-outline-primary"
+                        htmlFor={key}
+                      >{`${slippage * 100}%`}</label>
+                    </React.Fragment>
+                  );
+                })}
               </div>
             </div>
           </div>
-        )}
-        {/*{maxSwapInfo && maxSwapInfo.pools && (*/}
-        {/*  <div className="mt-3">*/}
-        {/*    <h5>Pool details</h5>*/}
-        {/*    <div>*/}
-        {/*      <Rate*/}
-        {/*        title="Rate"*/}
-        {/*        hideInverse*/}
-        {/*        inTokenAccountId={maxSwapInfo.inTokenAccountId}*/}
-        {/*        inTokenRemaining={*/}
-        {/*          maxSwapInfo.pool.tokens[maxSwapInfo.inTokenAccountId]*/}
-        {/*        }*/}
-        {/*        outTokens={[*/}
-        {/*          {*/}
-        {/*            remaining:*/}
-        {/*              maxSwapInfo.pool.tokens[maxSwapInfo.outTokenAccountId],*/}
-        {/*            tokenAccountId: maxSwapInfo.outTokenAccountId,*/}
-        {/*          },*/}
-        {/*        ]}*/}
-        {/*      />*/}
-        {/*      <Rate*/}
-        {/*        title="Inverse Rate"*/}
-        {/*        hideInverse*/}
-        {/*        inTokenAccountId={maxSwapInfo.outTokenAccountId}*/}
-        {/*        inTokenRemaining={*/}
-        {/*          maxSwapInfo.pool.tokens[maxSwapInfo.outTokenAccountId]*/}
-        {/*        }*/}
-        {/*        outTokens={[*/}
-        {/*          {*/}
-        {/*            remaining:*/}
-        {/*              maxSwapInfo.pool.tokens[maxSwapInfo.inTokenAccountId],*/}
-        {/*            tokenAccountId: maxSwapInfo.inTokenAccountId,*/}
-        {/*          },*/}
-        {/*        ]}*/}
-        {/*      />*/}
-        {/*    </div>*/}
-        {/*    <div className="left-right">*/}
-        {/*      <div>Index</div>*/}
-        {/*      <div>#{maxSwapInfo.pool.index}</div>*/}
-        {/*    </div>*/}
-        {/*    <div className="left-right">*/}
-        {/*      <div>*/}
-        {/*        Liquidity{" "}*/}
-        {/*        <b>*/}
-        {/*          <TokenSymbol tokenAccountId={maxSwapInfo.inTokenAccountId} />*/}
-        {/*        </b>*/}
-        {/*      </div>*/}
-        {/*      <div>*/}
-        {/*        <TokenBalance*/}
-        {/*          clickable*/}
-        {/*          tokenAccountId={maxSwapInfo.inTokenAccountId}*/}
-        {/*          balance={*/}
-        {/*            maxSwapInfo.pool.tokens[maxSwapInfo.inTokenAccountId]*/}
-        {/*          }*/}
-        {/*        />*/}
-        {/*      </div>*/}
-        {/*    </div>*/}
-        {/*    <div className="left-right">*/}
-        {/*      <div>*/}
-        {/*        Liquidity{" "}*/}
-        {/*        <b>*/}
-        {/*          <TokenSymbol tokenAccountId={maxSwapInfo.outTokenAccountId} />*/}
-        {/*        </b>*/}
-        {/*      </div>*/}
-        {/*      <div>*/}
-        {/*        <TokenBalance*/}
-        {/*          clickable*/}
-        {/*          tokenAccountId={maxSwapInfo.outTokenAccountId}*/}
-        {/*          balance={*/}
-        {/*            maxSwapInfo.pool.tokens[maxSwapInfo.outTokenAccountId]*/}
-        {/*          }*/}
-        {/*        />*/}
-        {/*      </div>*/}
-        {/*    </div>*/}
-        {/*  </div>*/}
-        {/*)}*/}
+          {swapInfo && swapInfo.pools && (
+            <div className="mt-3">
+              <h5>Swap details</h5>
+              <Rate
+                title="Rate"
+                hideInverse
+                inTokenAccountId={swapInfo.inTokenAccountId}
+                inTokenRemaining={swapInfo.amountIn}
+                outTokens={[
+                  {
+                    remaining: swapInfo.amountOut,
+                    tokenAccountId: swapInfo.outTokenAccountId,
+                  },
+                ]}
+              />
+              <Rate
+                title="Inverse Rate"
+                hideInverse
+                inTokenAccountId={swapInfo.outTokenAccountId}
+                inTokenRemaining={swapInfo.amountOut}
+                outTokens={[
+                  {
+                    remaining: swapInfo.amountIn,
+                    tokenAccountId: swapInfo.inTokenAccountId,
+                  },
+                ]}
+              />
+              <div className="left-right">
+                <div>Price Impact</div>
+                <div className="font-monospace">
+                  <span className="fw-bold">
+                    <MutedDecimals value={bigToString(priceImpactDiff, 2)} />
+                    {"$ "}
+                  </span>
+                  <span
+                    className={
+                      "text-secondary " +
+                      (priceImpact.lt(-0.02)
+                        ? "fw-bold text-danger"
+                        : priceImpact.lt(-0.005)
+                        ? "fw-bold text-warning"
+                        : priceImpact.gt(0.01)
+                        ? "fw-bold text-success"
+                        : "")
+                    }
+                  >
+                    ({bigToString(priceImpact.mul(100), 2)}%)
+                  </span>
+                </div>
+              </div>
+              <div className="left-right">
+                <div>Path</div>
+                <div>
+                  {swapPath.map((tokenAccountId, i) => (
+                    <React.Fragment key={`${gkey}-path-${i}`}>
+                      {i ? <> &#8594; </> : ""}
+                      <TokenSymbol tokenAccountId={tokenAccountId} />
+                    </React.Fragment>
+                  ))}
+                </div>
+              </div>
+              <div className="mt-1 d-grid">
+                <button
+                  className={`btn btn-${
+                    priceImpact.lt(-0.02) ? "danger" : "primary"
+                  }`}
+                  disabled={loading}
+                  onClick={swap}
+                >
+                  {loading && Loading}
+                  Swap{priceImpact.lt(-0.02) ? " (high price impact)" : ""}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

@@ -15,7 +15,7 @@ import { useAccount } from "./data/account";
 import { isTokenRegistered } from "./data/token";
 import SwapPage from "./pages/SwapPage";
 
-const swapEnabled = false;
+const swapEnabled = true;
 export const refreshAllowanceObj = {};
 
 export function App(props) {
@@ -211,7 +211,7 @@ export function App(props) {
                       aria-current="page"
                       to={`/swap/`}
                     >
-                      Swap
+                      [BETA] Swap
                     </Link>
                   </li>
                 )}

@@ -68,6 +68,7 @@ export default function TokenSelect(props) {
       id={props.id}
       className={props.className}
       classNamePrefix="react-select"
+      isDisabled={props.disabled}
       cacheOptions
       value={value}
       styles={selectStyles}

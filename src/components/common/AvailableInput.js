@@ -15,12 +15,17 @@ export default function AvailableInput(props) {
   const [innerValue, setInnerValue] = useState(value);
 
   useEffect(() => {
-    if (value !== lastExternalValue) {
+    if (
+      value !== lastExternalValue &&
+      (!value || !lastExternalValue || !Big(value).eq(lastExternalValue))
+    ) {
       setIsMax(false);
       setLastExternalValue(value);
-      setInnerValue(value);
+      if (!value || !innerValue || !Big(value).eq(Big(innerValue) || Big(0))) {
+        setInnerValue(value);
+      }
     }
-  }, [value, lastExternalValue]);
+  }, [value, lastExternalValue, innerValue]);
 
   useEffect(() => {
     if (limit) {
@@ -43,6 +48,7 @@ export default function AvailableInput(props) {
       <div className="form-floating" style={{ flex: "1 1 auto", width: "1%" }}>
         <input
           id={inputId}
+          disabled={props.disabled}
           autoFocus={props.autoFocus}
           className={`form-control ${
             props.large ? "form-control-lg" : ""
@@ -92,6 +98,7 @@ export default function AvailableInput(props) {
       </div>
       <button
         className="btn btn-outline-secondary"
+        disabled={props.disabled}
         type="button"
         onClick={() => setIsMax(true)}
       >

@@ -51,15 +51,12 @@ const defaultRefFinance = {
 };
 
 const usdTokens = {
-  "6b175474e89094c44da98b954eedeac495271d0f.factory.bridge.near": Big(10).pow(
-    18
-  ),
-  "a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.factory.bridge.near": Big(10).pow(
-    6
-  ),
-  "dac17f958d2ee523a2206206994597c13d831ec7.factory.bridge.near": Big(10).pow(
-    6
-  ),
+  "6b175474e89094c44da98b954eedeac495271d0f.factory.bridge.near":
+    Big(10).pow(18),
+  "a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.factory.bridge.near":
+    Big(10).pow(6),
+  "dac17f958d2ee523a2206206994597c13d831ec7.factory.bridge.near":
+    Big(10).pow(6),
 };
 
 export function getRefReturn(pool, tokenIn, amountIn) {
@@ -226,13 +223,43 @@ const fetchRefData = async (account) => {
   };
 };
 
+let refRefreshTimer = null;
+
 export const useRefFinance = singletonHook(defaultRefFinance, () => {
   const [refFinance, setRefFinance] = useState(defaultRefFinance);
   const account = useAccount();
 
   useEffect(() => {
     if (account && !account.loading) {
-      fetchRefData(account).then(setRefFinance).catch(console.error);
+      let scheduleRefresh;
+      let refresh;
+
+      const localMapRef = (ref) => {
+        ref.scheduleRefresh = scheduleRefresh;
+        ref.refresh = refresh;
+        return ref;
+      };
+
+      refresh = async () => {
+        const ref = await fetchRefData(account);
+        setRefFinance(localMapRef(ref));
+      };
+
+      scheduleRefresh = (fast) => {
+        clearTimeout(refRefreshTimer);
+        refRefreshTimer = setTimeout(
+          async () => {
+            if (!document.hidden) {
+              await refresh();
+            } else {
+              scheduleRefresh(fast);
+            }
+          },
+          fast ? 5000 : 30000
+        );
+      };
+
+      refresh().catch(console.error);
     }
   }, [account]);
 

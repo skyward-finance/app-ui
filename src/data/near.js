@@ -45,6 +45,7 @@ const TestNearConfig = {
   walletUrl: "https://wallet.testnet.near.org",
   storageCostPerByte: StorageCostPerByte,
   refContractName: "ref-finance.testnet",
+  referralId: "skyward.testnet",
 };
 const MainnetContract = "skyward.near";
 export const MainNearConfig = {
@@ -62,6 +63,7 @@ export const MainNearConfig = {
   storageCostPerByte: StorageCostPerByte,
   refContractName: "v2.ref-finance.near",
   oldRefFinanceToken: "token.ref-finance.near",
+  referralId: "skyward-ref.near",
 };
 
 export const NearConfig = IsMainnet ? MainNearConfig : TestNearConfig;
