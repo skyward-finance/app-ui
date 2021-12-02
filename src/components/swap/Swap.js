@@ -27,6 +27,7 @@ import MutedDecimals from "../common/MutedDecimals";
 import uuid from "react-uuid";
 import TokenSymbol from "../token/TokenSymbol";
 import * as nearAPI from "near-api-js";
+import { BalanceType } from "../account/AccountBalance";
 
 const EditMode = {
   None: "None",
@@ -191,14 +192,8 @@ export default function Swap(props) {
 
   const [availableInToken, setAvailableInToken] = useState(null);
   useEffect(() => {
-    let availableInToken = Big(0);
     if (tokenBalances) {
-      Object.entries(tokenBalances).forEach(([key, balance]) => {
-        if (balance) {
-          availableInToken = availableInToken.add(balance);
-        }
-      });
-      setAvailableInToken(availableInToken);
+      setAvailableInToken(tokenBalances[BalanceType.Wallet] || Big(0));
     }
   }, [tokenBalances]);
 
