@@ -193,7 +193,11 @@ export default function Swap(props) {
   const [availableInToken, setAvailableInToken] = useState(null);
   useEffect(() => {
     if (tokenBalances) {
-      setAvailableInToken(tokenBalances[BalanceType.Wallet] || Big(0));
+      setAvailableInToken(
+        (tokenBalances[BalanceType.Wallet] || Big(0)).add(
+          tokenBalances[BalanceType.NEAR] || Big(0)
+        )
+      );
     }
   }, [tokenBalances]);
 
@@ -397,6 +401,28 @@ export default function Swap(props) {
       swapInfo.outTokenAccountId,
       actions
     );
+
+    if (swapInfo.inTokenAccountId === NearConfig.wrapNearAccountId) {
+      await tokenRegisterStorageAction(
+        account,
+        swapInfo.inTokenAccountId,
+        actions
+      );
+
+      const wNearBalance = tokenBalances[BalanceType.Wallet] || Big(0);
+
+      if (wNearBalance.lt(swapInfo.amountIn)) {
+        actions.push([
+          NearConfig.wrapNearAccountId,
+          nearAPI.transactions.functionCall(
+            "near_deposit",
+            {},
+            TGas.mul(5).toFixed(0),
+            swapInfo.amountIn.sub(wNearBalance).toFixed(0)
+          ),
+        ]);
+      }
+    }
 
     let tokenId = swapInfo.inTokenAccountId;
 
