@@ -122,7 +122,13 @@ export function App(props) {
   ) : signedIn ? (
     <div>
       <button className="btn btn-outline-light" onClick={() => logOut()}>
-        Sign out ({signedAccountId})
+        Sign out (
+        {signedAccountId.length > 16
+          ? signedAccountId.substr(0, 6) +
+            "..." +
+            signedAccountId.substr(signedAccountId.length - 6)
+          : signedAccountId}
+        )
       </button>
     </div>
   ) : (
