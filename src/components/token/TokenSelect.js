@@ -60,7 +60,10 @@ export default function TokenSelect(props) {
   };
 
   const value = props.value
-    ? tokenOptions.filter((option) => option.value === props.value)
+    ? {
+        value: props.value,
+        label: <TokenBadge tokenAccountId={props.value} />,
+      }
     : null;
 
   return (

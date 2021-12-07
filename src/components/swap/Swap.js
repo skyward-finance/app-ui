@@ -49,44 +49,46 @@ const findBestReturn = (
   };
   if (refFinance && !refFinance.loading) {
     // Computing path
-    Object.values(refFinance.poolsByToken[inTokenAccountId]).forEach((pool) => {
-      // 1 token
-      if (outTokenAccountId in pool.tokens) {
-        const poolReturn =
-          getRefReturn(pool, inTokenAccountId, amountIn) || Big(0);
+    Object.values(refFinance.poolsByToken[inTokenAccountId] || {}).forEach(
+      (pool) => {
+        // 1 token
+        if (outTokenAccountId in pool.tokens) {
+          const poolReturn =
+            getRefReturn(pool, inTokenAccountId, amountIn) || Big(0);
 
-        if (poolReturn.gt(swapInfo.amountOut)) {
-          swapInfo = {
-            amountIn,
-            amountOut: poolReturn,
-            pools: [pool],
-          };
-        }
-      } else {
-        // 2 tokens
-        const middleTokenAccountId = pool.ot[inTokenAccountId];
-        const pair = `${middleTokenAccountId}:${outTokenAccountId}`;
-        let poolReturn = false;
-        Object.values(refFinance.poolsByPair[pair] || {}).forEach((pool2) => {
-          poolReturn =
-            poolReturn === false
-              ? getRefReturn(pool, inTokenAccountId, amountIn)
-              : poolReturn;
-          if (!poolReturn) {
-            return;
-          }
-          const pool2Return =
-            getRefReturn(pool2, middleTokenAccountId, poolReturn) || Big(0);
-          if (pool2Return.gt(swapInfo.amountOut)) {
+          if (poolReturn.gt(swapInfo.amountOut)) {
             swapInfo = {
               amountIn,
-              amountOut: pool2Return,
-              pools: [pool, pool2],
+              amountOut: poolReturn,
+              pools: [pool],
             };
           }
-        });
+        } else {
+          // 2 tokens
+          const middleTokenAccountId = pool.ot[inTokenAccountId];
+          const pair = `${middleTokenAccountId}:${outTokenAccountId}`;
+          let poolReturn = false;
+          Object.values(refFinance.poolsByPair[pair] || {}).forEach((pool2) => {
+            poolReturn =
+              poolReturn === false
+                ? getRefReturn(pool, inTokenAccountId, amountIn)
+                : poolReturn;
+            if (!poolReturn) {
+              return;
+            }
+            const pool2Return =
+              getRefReturn(pool2, middleTokenAccountId, poolReturn) || Big(0);
+            if (pool2Return.gt(swapInfo.amountOut)) {
+              swapInfo = {
+                amountIn,
+                amountOut: pool2Return,
+                pools: [pool, pool2],
+              };
+            }
+          });
+        }
       }
-    });
+    );
   }
   return Object.assign(swapInfo, {
     inTokenAccountId,
@@ -108,7 +110,7 @@ const findBestInverseReturn = (
   };
   if (refFinance && !refFinance.loading) {
     // Computing path
-    Object.values(refFinance.poolsByToken[outTokenAccountId]).forEach(
+    Object.values(refFinance.poolsByToken[outTokenAccountId] || {}).forEach(
       (pool) => {
         // 1 token
         if (inTokenAccountId in pool.tokens) {
