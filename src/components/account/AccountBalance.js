@@ -10,7 +10,7 @@ import {
   WrappedTokenType,
 } from "../../data/token";
 import { NearConfig, TGas } from "../../data/near";
-import { keysToCamel, Loading, stNearWarning } from "../../data/utils";
+import { keysToCamel, Loading } from "../../data/utils";
 import * as nearAPI from "near-api-js";
 import TokenBalance from "../token/TokenBalance";
 import Big from "big.js";
@@ -212,61 +212,54 @@ export function AccountBalance(props) {
         <TokenAndBalance tokenAccountId={tokenAccountId} balances={balances} />
       </div>
       {expanded && (
-        <>
-          {tokenAccountId === NearConfig.stNearAccountId ? stNearWarning : ""}
-          <div className="mb-2 flex-buttons">
-            {internalBalance.gt(0) && (
-              <button
-                className="btn btn-primary m-1"
-                disabled={
-                  internalBalance.eq(0) ||
-                  loading ||
-                  tokenAccountId === NearConfig.stNearAccountId
-                }
-                onClick={(e) => withdrawInternal(e)}
-              >
-                {loading && Loading}
-                Withdraw{" "}
-                <TokenBalance
-                  tokenAccountId={tokenAccountId}
-                  balance={internalBalance}
-                />{" "}
-                <TokenSymbol tokenAccountId={tokenAccountId} /> to wallet
-              </button>
-            )}
-            {refBalance.gt(0) && (
-              <button
-                className="btn btn-primary m-1"
-                disabled={refBalance.eq(0) || loading}
-                onClick={(e) => withdrawFromRef(e)}
-              >
-                {loading && Loading}
-                Withdraw{" "}
-                <TokenBalance
-                  tokenAccountId={tokenAccountId}
-                  balance={refBalance}
-                />{" "}
-                <TokenSymbol tokenAccountId={tokenAccountId} /> from REF Finance
-                to wallet
-              </button>
-            )}
-            {unwrapPossible && (
-              <button
-                className="btn btn-primary m-1"
-                disabled={!canUnwrap || loading}
-                onClick={(e) => unwrapToken(e)}
-              >
-                {loading && Loading}
-                Unwrap{" "}
-                <TokenBalance
-                  tokenAccountId={tokenAccountId}
-                  balance={tokenBalance}
-                />{" "}
-                <TokenSymbol tokenAccountId={tokenAccountId} />
-              </button>
-            )}
-          </div>
-        </>
+        <div className="mb-2 flex-buttons">
+          {internalBalance.gt(0) && (
+            <button
+              className="btn btn-primary m-1"
+              disabled={internalBalance.eq(0) || loading}
+              onClick={(e) => withdrawInternal(e)}
+            >
+              {loading && Loading}
+              Withdraw{" "}
+              <TokenBalance
+                tokenAccountId={tokenAccountId}
+                balance={internalBalance}
+              />{" "}
+              <TokenSymbol tokenAccountId={tokenAccountId} /> to wallet
+            </button>
+          )}
+          {refBalance.gt(0) && (
+            <button
+              className="btn btn-primary m-1"
+              disabled={refBalance.eq(0) || loading}
+              onClick={(e) => withdrawFromRef(e)}
+            >
+              {loading && Loading}
+              Withdraw{" "}
+              <TokenBalance
+                tokenAccountId={tokenAccountId}
+                balance={refBalance}
+              />{" "}
+              <TokenSymbol tokenAccountId={tokenAccountId} /> from REF Finance
+              to wallet
+            </button>
+          )}
+          {unwrapPossible && (
+            <button
+              className="btn btn-primary m-1"
+              disabled={!canUnwrap || loading}
+              onClick={(e) => unwrapToken(e)}
+            >
+              {loading && Loading}
+              Unwrap{" "}
+              <TokenBalance
+                tokenAccountId={tokenAccountId}
+                balance={tokenBalance}
+              />{" "}
+              <TokenSymbol tokenAccountId={tokenAccountId} />
+            </button>
+          )}
+        </div>
       )}
     </div>
   );

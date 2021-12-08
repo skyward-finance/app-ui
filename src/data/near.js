@@ -46,7 +46,6 @@ const TestNearConfig = {
   storageCostPerByte: StorageCostPerByte,
   refContractName: "ref-finance.testnet",
   referralId: "skyward.testnet",
-  stNearAccountId: "",
 };
 const MainnetContract = "skyward.near";
 export const MainNearConfig = {
@@ -65,7 +64,6 @@ export const MainNearConfig = {
   refContractName: "v2.ref-finance.near",
   oldRefFinanceToken: "token.ref-finance.near",
   referralId: "skyward-ref.near",
-  stNearAccountId: "meta-pool.near",
 };
 
 export const NearConfig = IsMainnet ? MainNearConfig : TestNearConfig;

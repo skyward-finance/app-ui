@@ -14,7 +14,6 @@ import {
   isLowValueSale,
   isSaleWhitelisted,
   Loading,
-  stNearWarning,
   tokenStorageDeposit,
   toTokenBalance,
 } from "../../data/utils";
@@ -509,8 +508,6 @@ export default function Subscription(props) {
               <br />
             </div>
           )}
-          {sale.inTokenAccountId === NearConfig.stNearAccountId &&
-            stNearWarning}
 
           <SaleInputOutputs
             inputLabel="You Deposited"
