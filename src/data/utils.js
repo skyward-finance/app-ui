@@ -32,6 +32,13 @@ export const Loading = (
   />
 );
 
+export const stNearWarning = (
+  <div className="alert alert-warning">
+    Warning! The withdrawal of STNEAR token is currently disabled. The team is
+    working on a solution to enable withdrawals.
+  </div>
+);
+
 export function isValidAccountId(accountId) {
   return (
     accountId &&

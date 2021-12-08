@@ -84,6 +84,7 @@ export function App(props) {
           if (
             balance.gt(0) &&
             tokenAccountId !== NearConfig.wrapNearAccountId &&
+            tokenAccountId !== NearConfig.stNearAccountId &&
             (await isTokenRegistered(
               account,
               tokenAccountId,
