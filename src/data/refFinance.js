@@ -187,7 +187,7 @@ const fetchRefData = async (account) => {
       };
       p.totalNear = p.totalNear.add(pool.tokens[wNEAR]);
       p.totalOther = p.totalOther.add(pool.tokens[pool.otherToken]);
-      if (p.totalNear.gt(OneNear.mul(10))) {
+      if (p.totalNear.gt(0)) {
         prices[pool.otherToken] = p;
       }
     }

@@ -168,11 +168,15 @@ export const computeUsdBalance = (refFinance, tokenAccountId, balance) => {
       refFinance.nearPrice.gt(0)
     ) {
       const p = refFinance.prices[tokenAccountId];
-      return balance
-        .mul(p.totalNear)
-        .div(p.totalOther)
-        .div(OneNear)
-        .mul(refFinance.nearPrice);
+      const balanceIn = p.totalOther;
+      const balanceOut = p.totalNear;
+      let amountWithFee = Big(balance.div(1000)).mul(Big(10000 - 30));
+      const amountOut = amountWithFee
+        .mul(balanceOut)
+        .div(Big(10000).mul(balanceIn).add(amountWithFee))
+        .round(0, 0);
+
+      return amountOut.mul(1000).div(OneNear).mul(refFinance.nearPrice);
     }
   }
   return null;
