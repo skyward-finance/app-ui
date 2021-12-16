@@ -23,6 +23,9 @@ export const tokenMatches = (tokenAccountId, label) => {
 };
 
 export const isTokenRegistered = async (account, tokenAccountId, accountId) => {
+  if (tokenAccountId in NearConfig.noStorageTokens) {
+    return true;
+  }
   const storageBalance = await account.near.account.viewFunction(
     tokenAccountId,
     "storage_balance_of",
@@ -36,15 +39,17 @@ export const isTokenRegistered = async (account, tokenAccountId, accountId) => {
 export const tokenRegisterStorageAction = async (
   account,
   tokenAccountId,
-  actions
+  actions,
+  accountId
 ) => {
-  if (!(await isTokenRegistered(account, tokenAccountId, account.accountId))) {
+  accountId = accountId || account.accountId;
+  if (!(await isTokenRegistered(account, tokenAccountId, accountId))) {
     actions.push([
       tokenAccountId,
       nearAPI.transactions.functionCall(
         "storage_deposit",
         {
-          account_id: account.accountId,
+          account_id: accountId,
           registration_only: true,
         },
         TGas.mul(5).toFixed(0),

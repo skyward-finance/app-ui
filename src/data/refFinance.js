@@ -36,6 +36,7 @@ export const defaultWhitelistedTokens = new Set([
   "aurora",
   "pixeltoken.near",
   "dbio.near",
+  "meta-token.near",
 ]);
 
 const defaultRefFinance = {

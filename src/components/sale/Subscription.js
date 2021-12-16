@@ -17,7 +17,7 @@ import {
   tokenStorageDeposit,
   toTokenBalance,
 } from "../../data/utils";
-import { isTokenRegistered, useToken } from "../../data/token";
+import { tokenRegisterStorageAction, useToken } from "../../data/token";
 import { useAccount } from "../../data/account";
 import {
   IsMainnet,
@@ -42,7 +42,6 @@ const WithdrawMode = "Withdrawal";
 
 export default function Subscription(props) {
   const withdrawToWalletLsKey = LsKey + "withdrawToWallet";
-  const allowDepositFromRefLsKey = LsKey + "allowDepositFromRef";
 
   const [mode, setMode] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -50,9 +49,6 @@ export default function Subscription(props) {
   const [withdrawAmount, setWithdrawAmount] = useState(null);
   const [withdrawToWallet, setWithdrawToWallet] = useState(
     ls.get(withdrawToWalletLsKey) || false
-  );
-  const [allowDepositFromRef, setAllowDepositFromRef] = useState(
-    ls.get(allowDepositFromRefLsKey) || true
   );
 
   const sale = props.sale;
@@ -79,7 +75,7 @@ export default function Subscription(props) {
 
   if (tokenBalances) {
     Object.entries(tokenBalances).forEach(([key, balance]) => {
-      if (balance && (allowDepositFromRef || key !== BalanceType.Ref)) {
+      if (balance && key !== BalanceType.Ref) {
         availableInToken = availableInToken.add(balance);
       }
     });
@@ -155,22 +151,7 @@ export default function Subscription(props) {
   const makeOutRegistered = async (actions) => {
     const outTokens = sale.outTokens.map((o) => o.tokenAccountId);
     for (let i = 0; i < outTokens.length; i++) {
-      if (
-        !(await isTokenRegistered(account, outTokens[i], account.accountId))
-      ) {
-        actions.push([
-          outTokens[i],
-          nearAPI.transactions.functionCall(
-            "storage_deposit",
-            {
-              account_id: account.accountId,
-              registration_only: true,
-            },
-            TGas.mul(5).toFixed(0),
-            (await tokenStorageDeposit(outTokens[i])).toFixed(0)
-          ),
-        ]);
-      }
+      await tokenRegisterStorageAction(account, outTokens[i], actions);
     }
   };
 
@@ -212,20 +193,7 @@ export default function Subscription(props) {
     const inBalance = tokenBalances[BalanceType.Wallet] || Big(0);
     let remainingInBalance = fromInToken.sub(bigMin(fromInToken, inBalance));
 
-    if (!(await inToken.contract.isRegistered(account, account.accountId))) {
-      actions.push([
-        sale.inTokenAccountId,
-        nearAPI.transactions.functionCall(
-          "storage_deposit",
-          {
-            account_id: account.accountId,
-            registration_only: true,
-          },
-          TGas.mul(5).toFixed(0),
-          (await tokenStorageDeposit(sale.inTokenAccountId)).toFixed(0)
-        ),
-      ]);
-    }
+    await tokenRegisterStorageAction(account, sale.inTokenAccountId, actions);
 
     if (sale.inTokenAccountId === NearConfig.wrapNearAccountId) {
       // wrap NEAR
@@ -251,48 +219,18 @@ export default function Subscription(props) {
       }
     }
 
-    // Trying Ref deposit
-    const refBalance = tokenBalances[BalanceType.Ref] || Big(0);
-    if (allowDepositFromRef && remainingInBalance.gt(0) && refBalance.gt(0)) {
-      const amountFromRef = bigMin(remainingInBalance, refBalance);
-      remainingInBalance = remainingInBalance.sub(amountFromRef);
-      actions.push([
-        NearConfig.refContractName,
-        nearAPI.transactions.functionCall(
-          "withdraw",
-          {
-            token_id: sale.inTokenAccountId,
-            amount: amountFromRef.toFixed(0),
-            unregister: false,
-          },
-          TGas.mul(70).toFixed(0),
-          1
-        ),
-      ]);
-    }
-
     if (remainingInBalance.gt(0)) {
       throw new Error(
         `Remaining balance ${remainingInBalance.toFixed(0)} is greater than 0`
       );
     }
 
-    if (
-      !(await inToken.contract.isRegistered(account, NearConfig.contractName))
-    ) {
-      actions.push([
-        sale.inTokenAccountId,
-        nearAPI.transactions.functionCall(
-          "storage_deposit",
-          {
-            account_id: NearConfig.contractName,
-            registration_only: true,
-          },
-          TGas.mul(5).toFixed(0),
-          (await tokenStorageDeposit(sale.inTokenAccountId)).toFixed(0)
-        ),
-      ]);
-    }
+    await tokenRegisterStorageAction(
+      account,
+      sale.inTokenAccountId,
+      actions,
+      NearConfig.contractName
+    );
 
     if (fromInToken.gt(0)) {
       actions.push([
@@ -623,29 +561,6 @@ export default function Subscription(props) {
                 setValue={(v) => setExtraDeposit(v)}
                 limit={availableInTokenHuman}
               />
-              <div className="form-check">
-                <input
-                  className="form-check-input"
-                  type="checkbox"
-                  id="allowDepositFromRef"
-                  checked={allowDepositFromRef}
-                  onChange={(e) => {
-                    ls.set(allowDepositFromRefLsKey, e.target.checked);
-                    setAllowDepositFromRef(e.target.checked);
-                  }}
-                />
-                <label
-                  className="form-check-label"
-                  htmlFor="allowDepositFromRef"
-                >
-                  Use balance from Ref Finance
-                  <span className="text-muted">
-                    {" "}
-                    (if checked, the available balance will display balance from
-                    Ref Finance)
-                  </span>
-                </label>
-              </div>
               <div className="clearfix">
                 <button
                   className="btn btn-success m-1"
@@ -682,10 +597,9 @@ export default function Subscription(props) {
                       className={`btn btn-outline-primary m-1`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      href={`https://app.ref.finance/#wrap.near|${sale.inTokenAccountId}`}
+                      href={`https://app.skyward.finance/swap/wrap.near/${sale.inTokenAccountId}`}
                     >
-                      Buy <TokenSymbol tokenAccountId={sale.inTokenAccountId} />{" "}
-                      on Ref Finance
+                      Buy <TokenSymbol tokenAccountId={sale.inTokenAccountId} />
                     </a>
                   )}
                 {IsMainnet && isBridgeToken(sale.inTokenAccountId) && (
