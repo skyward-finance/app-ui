@@ -13,7 +13,7 @@ const referralFetcher = async (_key, accountId) => {
   }
   let request = {
     user: "public_readonly",
-    host: "104.199.89.51",
+    host: "mainnet.db.explorer.indexer.near.dev",
     database: "mainnet_explorer",
     password: "nearprotocol",
     port: 5432,
