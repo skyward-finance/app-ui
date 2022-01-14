@@ -67,6 +67,7 @@ export const WrappedTokenType = {
 export const WrappedTokens = {
   [NearConfig.wrapNearAccountId]: WrappedTokenType.WrappedNEAR,
   "f-aurora.near": WrappedTokenType.WrappedFT,
+  "skyward-pixeltoken.near": WrappedTokenType.WrappedFT,
 };
 
 // const tokenBalances = {};
