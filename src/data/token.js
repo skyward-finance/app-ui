@@ -132,7 +132,7 @@ export const getTokenFetcher = async (_key, tokenAccountId, account) => {
         if (!info) {
           return false;
         }
-        return info.status === "Unlocked";
+        return info.status ? info.status === "Unlocked" : true;
       }
     },
   };
