@@ -219,10 +219,11 @@ export default function Treasury(props) {
       : [];
 
   balances.sort((a, b) => b.usdValue.toNumber() - a.usdValue.toNumber());
+  const potentialTokenValueMultiplier = (new Date().getTime() - 1611083139130) / 31536000000;
   const estimatedTreasuryUsdValue = balances.reduce(
     (p, b) => p.add(b.usdValue),
     Big(0)
-  );
+  ).mul(potentialTokenValueMultiplier);
   const usdPerSkyward = toTokenBalance(
     skywardToken,
     estimatedTreasuryUsdValue.div(treasury.skywardCirculatingSupply || Big(1))
@@ -388,7 +389,7 @@ export default function Treasury(props) {
           </div>
           {estimatedTreasuryUsdValue.gt(0) && (
             <div>
-              Treasury total value locked:{" "}
+              <span title="Based on the potential token values">*</span>Treasury total value locked:{" "}
               <span className="font-monospace fw-bold">
                 <span className="text-secondary">~$</span>
                 <MutedDecimals value={bigToString(estimatedTreasuryUsdValue)} />
@@ -397,7 +398,7 @@ export default function Treasury(props) {
           )}
           {usdPerSkyward.gt(0) && (
             <div>
-              Per{" "}
+              <span title="Based on the potential token values">*</span>Per{" "}
               <TokenSymbol tokenAccountId={NearConfig.skywardTokenAccountId} />{" "}
               token:{" "}
               <span className="font-monospace fw-bold">
