@@ -54,37 +54,40 @@ const findBestReturn = (
         // 1 token
         if (outTokenAccountId in pool.tokens) {
           const poolReturn =
-            getRefReturn(pool, inTokenAccountId, amountIn) || Big(0);
+            getRefReturn(pool, inTokenAccountId, amountIn, outTokenAccountId) || Big(0);
 
           if (poolReturn.gt(swapInfo.amountOut)) {
             swapInfo = {
               amountIn,
               amountOut: poolReturn,
               pools: [pool],
+              swapPath: [inTokenAccountId, outTokenAccountId]
             };
           }
         } else {
           // 2 tokens
-          const middleTokenAccountId = pool.ot[inTokenAccountId];
-          const pair = `${middleTokenAccountId}:${outTokenAccountId}`;
-          let poolReturn = false;
-          Object.values(refFinance.poolsByPair[pair] || {}).forEach((pool2) => {
-            poolReturn =
-              poolReturn === false
-                ? getRefReturn(pool, inTokenAccountId, amountIn)
-                : poolReturn;
-            if (!poolReturn) {
-              return;
-            }
-            const pool2Return =
-              getRefReturn(pool2, middleTokenAccountId, poolReturn) || Big(0);
-            if (pool2Return.gt(swapInfo.amountOut)) {
-              swapInfo = {
-                amountIn,
-                amountOut: pool2Return,
-                pools: [pool, pool2],
-              };
-            }
+          pool.ots[inTokenAccountId].forEach((middleTokenAccountId) => {
+            const pair = `${middleTokenAccountId}:${outTokenAccountId}`;
+            let poolReturn = false;
+            Object.values(refFinance.poolsByPair[pair] || {}).forEach((pool2) => {
+              poolReturn =
+                poolReturn === false
+                  ? getRefReturn(pool, inTokenAccountId, amountIn, middleTokenAccountId)
+                  : poolReturn;
+              if (!poolReturn) {
+                return;
+              }
+              const pool2Return =
+                getRefReturn(pool2, middleTokenAccountId, poolReturn, outTokenAccountId) || Big(0);
+              if (pool2Return.gt(swapInfo.amountOut)) {
+                swapInfo = {
+                  amountIn,
+                  amountOut: pool2Return,
+                  pools: [pool, pool2],
+                  swapPath: [inTokenAccountId, middleTokenAccountId, outTokenAccountId]
+                };
+              }
+            });
           });
         }
       }
@@ -117,7 +120,8 @@ const findBestInverseReturn = (
           const amountIn = getRefInverseReturn(
             pool,
             outTokenAccountId,
-            outAmount
+            outAmount,
+            inTokenAccountId
           );
           if (!amountIn) {
             return;
@@ -128,36 +132,40 @@ const findBestInverseReturn = (
               amountIn,
               amountOut: outAmount,
               pools: [pool],
+              swapPath: [inTokenAccountId, outTokenAccountId]
             };
           }
         } else {
           // 2 tokens
-          const middleTokenAccountId = pool.ot[outTokenAccountId];
-          const pair = `${middleTokenAccountId}:${inTokenAccountId}`;
-          let middleAmountIn = false;
-          Object.values(refFinance.poolsByPair[pair] || {}).forEach((pool2) => {
-            middleAmountIn =
-              middleAmountIn === false
-                ? getRefInverseReturn(pool, outTokenAccountId, outAmount)
-                : middleAmountIn;
-            if (!middleAmountIn) {
-              return;
-            }
-            const amountIn = getRefInverseReturn(
-              pool2,
-              middleTokenAccountId,
-              middleAmountIn
-            );
-            if (!amountIn) {
-              return;
-            }
-            if (amountIn.lt(swapInfo.amountIn)) {
-              swapInfo = {
-                amountIn,
-                amountOut: outAmount,
-                pools: [pool2, pool],
-              };
-            }
+          pool.ots[outTokenAccountId].forEach((middleTokenAccountId) => {
+            const pair = `${middleTokenAccountId}:${inTokenAccountId}`;
+            let middleAmountIn = false;
+            Object.values(refFinance.poolsByPair[pair] || {}).forEach((pool2) => {
+              middleAmountIn =
+                middleAmountIn === false
+                  ? getRefInverseReturn(pool, outTokenAccountId, outAmount, middleTokenAccountId)
+                  : middleAmountIn;
+              if (!middleAmountIn) {
+                return;
+              }
+              const amountIn = getRefInverseReturn(
+                pool2,
+                middleTokenAccountId,
+                middleAmountIn,
+                inTokenAccountId
+              );
+              if (!amountIn) {
+                return;
+              }
+              if (amountIn.lt(swapInfo.amountIn)) {
+                swapInfo = {
+                  amountIn,
+                  amountOut: outAmount,
+                  pools: [pool2, pool],
+                  swapPath: [inTokenAccountId, middleTokenAccountId, outTokenAccountId]
+                };
+              }
+            });
           });
         }
       }
@@ -363,7 +371,6 @@ export default function Swap(props) {
 
   let priceImpact = Big(0);
   let priceImpactDiff = Big(0);
-  let swapPath = [];
   if (refFinance && swapInfo && swapInfo.pools) {
     const inputUsdValue = computeUsdBalance(
       refFinance,
@@ -382,15 +389,6 @@ export default function Swap(props) {
         : Big(0);
 
     priceImpactDiff = outputUsdValue.sub(inputUsdValue);
-
-    swapPath.push(swapInfo.inTokenAccountId);
-    swapInfo.pools.forEach((pool) => {
-      const nextTokenId = pool.ot[swapPath[swapPath.length - 1]];
-      if (!nextTokenId) {
-        console.log(swapInfo);
-      }
-      swapPath.push(nextTokenId);
-    });
   }
 
   const swap = async (e) => {
@@ -437,9 +435,9 @@ export default function Swap(props) {
           amount: swapInfo.amountIn.toFixed(0),
           msg: JSON.stringify({
             referral_id: NearConfig.referralId,
-            actions: swapInfo.pools.map((pool) => {
+            actions: swapInfo.pools.map((pool, idx) => {
               const tokenIn = tokenId;
-              tokenId = pool.ot[tokenIn];
+              tokenId = swapInfo.swapPath[idx + 1];
               return {
                 pool_id: pool.index,
                 token_in: tokenIn,
@@ -688,7 +686,7 @@ export default function Swap(props) {
               <div className="left-right">
                 <div>Path</div>
                 <div>
-                  {swapPath.map((tokenAccountId, i) => (
+                  {swapInfo.swapPath.map((tokenAccountId, i) => (
                     <React.Fragment key={`${gkey}-path-${i}`}>
                       {i ? <> &#8594; </> : ""}
                       <TokenSymbol tokenAccountId={tokenAccountId} />

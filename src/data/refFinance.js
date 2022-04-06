@@ -7,6 +7,7 @@ import { OneNear } from "./utils";
 import { useAccount } from "./account";
 
 const SimplePool = "SIMPLE_POOL";
+const StablePool = "STABLE_SWAP";
 
 export const defaultWhitelistedTokens = new Set([
   "wrap.near",
@@ -51,22 +52,74 @@ const defaultRefFinance = {
   whitelistedTokens: defaultWhitelistedTokens,
 };
 
-const usdTokens = {
+
+const usdTokensDecimals = {
   "6b175474e89094c44da98b954eedeac495271d0f.factory.bridge.near":
-    Big(10).pow(18),
+    18,
   "a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.factory.bridge.near":
-    Big(10).pow(6),
+    6,
   "dac17f958d2ee523a2206206994597c13d831ec7.factory.bridge.near":
-    Big(10).pow(6),
+    6,
+  "usn":
+    18,
 };
 
-export function getRefReturn(pool, tokenIn, amountIn) {
+
+const usdTokens = Object.entries(usdTokensDecimals).reduce((acc, [key, value]) => {
+  acc[key] = Big(10).pow(value);
+  return acc;
+}, {});
+
+
+function stablePoolGetReturn(pool, tokenIn, amountIn, tokenOut) {
+  let tokenInIndex = pool.tt.indexOf(tokenIn);
+  let tokenOutIndex = pool.tt.indexOf(tokenOut);
+  // Sub 1
+  const cAmountIn = amountIn.sub(1).mul(Big(10).pow(18 - usdTokensDecimals[tokenIn]));
+
+  let y = stablePoolComputeY(
+    pool,
+    cAmountIn.add(pool.cAmounts[tokenInIndex]),
+    tokenInIndex,
+    tokenOutIndex
+  );
+
+  let dy = pool.cAmounts[tokenOutIndex].sub(y);
+  let tradeFee = dy.mul(pool.fee).div(10000).round(0, 0);
+  let amountSwapped = dy.sub(tradeFee);
+
+  return amountSwapped.div(Big(10).pow(18 - usdTokensDecimals[tokenOut])).round(0, 0);
+}
+
+function stablePoolGetInverseReturn(pool, tokenOut, amountOut, tokenIn) {
+  let tokenInIndex = pool.tt.indexOf(tokenIn);
+  let tokenOutIndex = pool.tt.indexOf(tokenOut);
+
+  const amountOutWithFee = amountOut.mul(10000).div(10000 - pool.fee).round(0, 0);
+  const cAmountOut = amountOutWithFee.mul(Big(10).pow(18 - usdTokensDecimals[tokenOut]));
+
+  let y = stablePoolComputeY(
+    pool,
+    pool.cAmounts[tokenOutIndex].sub(cAmountOut),
+    tokenOutIndex,
+    tokenInIndex
+  );
+
+  let cAmountIn = y.sub(pool.cAmounts[tokenInIndex]);
+
+  // Adding 1 for internal pool rounding
+  return cAmountIn.div(Big(10).pow(18 - usdTokensDecimals[tokenIn])).add(1).round(0, 0);
+}
+
+export function getRefReturn(pool, tokenIn, amountIn, tokenOut) {
   if (!amountIn || amountIn.eq(0)) {
     return Big(0);
   }
-  const tokenOut = pool.ot[tokenIn];
-  if (!tokenOut) {
+  if (!(tokenIn in pool.tokens) || !(tokenOut in pool.tokens) || tokenIn === tokenOut) {
     return null;
+  }
+  if (pool.stable) {
+    return stablePoolGetReturn(pool, tokenIn, amountIn, tokenOut);
   }
   const balanceIn = pool.tokens[tokenIn];
   const balanceOut = pool.tokens[tokenOut];
@@ -77,13 +130,15 @@ export function getRefReturn(pool, tokenIn, amountIn) {
     .round(0, 0);
 }
 
-export function getRefInverseReturn(pool, tokenOut, amountOut) {
+export function getRefInverseReturn(pool, tokenOut, amountOut, tokenIn) {
   if (!amountOut || amountOut.eq(0)) {
     return Big(0);
   }
-  const tokenIn = pool.ot[tokenOut];
-  if (!tokenIn) {
+  if (!(tokenIn in pool.tokens) || !(tokenOut in pool.tokens) || tokenIn === tokenOut) {
     return null;
+  }
+  if (pool.stable) {
+    return stablePoolGetInverseReturn(pool, tokenOut, amountOut, tokenIn);
   }
   const balanceIn = pool.tokens[tokenIn];
   const balanceOut = pool.tokens[tokenOut];
@@ -95,6 +150,76 @@ export function getRefInverseReturn(pool, tokenOut, amountOut) {
     .mul(amountOut)
     .div(Big(10000 - pool.fee).mul(balanceOut.sub(amountOut)))
     .round(0, 3);
+}
+
+
+function stablePoolComputeD(pool) {
+  let sumX = pool.cAmounts.reduce((sum, v) => sum.add(v), Big(0));
+  if (sumX.eq(0)) {
+    return Big(0);
+  } else {
+    let d = sumX;
+    let dPrev;
+
+    for (let i = 0; i < 256; ++i) {
+      let dProd = d;
+      for (let j = 0; j < pool.nCoins; ++j) {
+        dProd = dProd.mul(d).div(pool.cAmounts[j].mul(pool.nCoins)).round(0, 0);
+      }
+      dPrev = d;
+
+      let leverage = sumX.mul(pool.ann);
+      let numerator = dPrev.mul(dProd.mul(pool.nCoins).add(leverage));
+      let denominator = dPrev
+        .mul(pool.ann.sub(1))
+        .add(dProd.mul(pool.nCoins + 1));
+      d = numerator.div(denominator).round(0, 0);
+
+      // Equality with the precision of 1
+      if (d.gt(dPrev)) {
+        if (d.sub(dPrev).lte(1)) {
+          break;
+        }
+      } else if (dPrev.sub(d).lte(1)) {
+        break;
+      }
+    }
+    return d;
+  }
+}
+
+function stablePoolComputeY(pool, xCAmount, indexX, indexY) {
+  // invariant
+  let d = pool.d;
+  let s = xCAmount;
+  let c = d.mul(d).div(xCAmount).round(0, 0);
+  pool.cAmounts.forEach((c_amount, idx) => {
+    if (idx !== indexX && idx !== indexY) {
+      s = s.add(c_amount);
+      c = c.mul(d).div(c_amount).round(0, 0);
+    }
+  });
+  c = c.mul(d).div(pool.ann.mul(pool.nn)).round(0, 0);
+  let b = d.div(pool.ann).round(0, 0).add(s); // d will be subtracted later
+
+  // Solve for y by approximating: y**2 + b*y = c
+  let yPrev;
+  let y = d;
+  for (let i = 0; i < 256; ++i) {
+    yPrev = y;
+    // $ y_{k+1} = \frac{y_k^2 + c}{2y_k + b - D} $
+    let yNumerator = y.pow(2).add(c);
+    let yDenominator = y.mul(2).add(b).sub(d);
+    y = yNumerator.div(yDenominator).round(0, 0);
+    if (y.gt(yPrev)) {
+      if (y.sub(yPrev).lte(1)) {
+        break;
+      }
+    } else if (yPrev.sub(y).lte(1)) {
+      break;
+    }
+  }
+  return y;
 }
 
 const fetchRefData = async (account) => {
@@ -144,34 +269,48 @@ const fetchRefData = async (account) => {
     ps.push(pool);
     poolsByToken[token] = ps;
 
-    const pair = `${token}:${pool.ot[token]}`;
-    ps = poolsByPair[pair] || [];
-    ps.push(pool);
-    poolsByPair[pair] = ps;
+    pool.ots[token].forEach((ot) => {
+      const pair = `${token}:${ot}`;
+      ps = poolsByPair[pair] || [];
+      ps.push(pool);
+      poolsByPair[pair] = ps;
+    });
   };
 
   const pools = {};
   rawPools.forEach((pool, i) => {
-    if (pool.pool_kind === SimplePool) {
+    if (pool.pool_kind === SimplePool || pool.pool_kind === StablePool) {
       const tt = pool.token_account_ids;
       const p = {
+        stable: pool.pool_kind === StablePool,
         index: i,
         tt,
         tokens: tt.reduce((acc, token, tokenIndex) => {
           acc[token] = Big(pool.amounts[tokenIndex]);
           return acc;
         }, {}),
-        ot: tt.reduce((acc, token, tokenIndex) => {
-          acc[token] = tt[1 - tokenIndex];
+        ots: tt.reduce((acc, token) => {
+          acc[token] = tt.filter((t) => t !== token);
           return acc;
         }, {}),
         fee: pool.total_fee,
         shares: Big(pool.shares_total_supply),
+        amp: pool.amp || 0,
       };
+      if (p.stable) {
+        p.cAmounts = [...pool.amounts].map((amount, idx) => {
+          let factor = Big(10).pow(18 - usdTokensDecimals[tt[idx]]);
+          return Big(amount).mul(factor);
+        });
+        p.nCoins = p.cAmounts.length;
+        p.nn = Big(Math.pow(p.nCoins, p.nCoins));
+        p.ann = Big(p.amp).mul(p.nn);
+        p.d = stablePoolComputeD(p);
+      }
+
       if (p.shares.gt(0)) {
         pools[p.index] = p;
-        addPools(p.tt[0], p);
-        addPools(p.tt[1], p);
+        p.tt.forEach((t) => addPools(t, p));
       }
     }
   });
@@ -180,8 +319,8 @@ const fetchRefData = async (account) => {
   const prices = {};
 
   Object.values(pools).forEach((pool) => {
-    if (wNEAR in pool.tokens) {
-      pool.otherToken = pool.ot[wNEAR];
+    if (wNEAR in pool.tokens && !pool.stable) {
+      pool.otherToken = pool.ots[wNEAR][0];
       const p = prices[pool.otherToken] || {
         totalNear: Big(0),
         totalOther: Big(0),

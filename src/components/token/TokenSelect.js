@@ -44,7 +44,8 @@ export default function TokenSelect(props) {
         if (option.value === inputValue) {
           return false;
         }
-        return tokenMatches(option.value, inputValue);
+        const matches = tokenMatches(option.value, inputValue);
+        return matches;
       }),
     ].filter(tokenFilter);
   };
