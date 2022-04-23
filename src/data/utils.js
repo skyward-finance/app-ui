@@ -23,6 +23,7 @@ export const skywardUrl = () =>
 export const hardcodedWhitelist = {
   50: true,
   86: true,
+  94: true,
 };
 
 export const Loading = (
