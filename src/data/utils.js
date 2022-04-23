@@ -218,6 +218,9 @@ export const isSaleWhitelisted = (sale, refFinance) => {
 };
 
 export const isLowValueSale = (sale, refFinance) => {
+  if (sale.saleId in hardcodedWhitelist) {
+    return false;
+  }
   if (!isSaleWhitelisted(sale, refFinance)) {
     return false;
   }
