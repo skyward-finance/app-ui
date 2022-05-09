@@ -63,6 +63,10 @@ const usdTokensDecimals = {
   "usn":
     18,
 };
+const tokenDecimals = Object.assign({
+  "2260fac5e5542a773aa44fbcfedf7c193bc2c599.factory.bridge.near": 8,
+  "0316eb71485b0ab14103307bf65a021042c6d380.factory.bridge.near": 18,
+}, usdTokensDecimals);
 
 
 const usdTokens = Object.entries(usdTokensDecimals).reduce((acc, [key, value]) => {
@@ -75,7 +79,7 @@ function stablePoolGetReturn(pool, tokenIn, amountIn, tokenOut) {
   let tokenInIndex = pool.tt.indexOf(tokenIn);
   let tokenOutIndex = pool.tt.indexOf(tokenOut);
   // Sub 1
-  const cAmountIn = amountIn.sub(1).mul(Big(10).pow(18 - usdTokensDecimals[tokenIn]));
+  const cAmountIn = amountIn.sub(1).mul(Big(10).pow(18 - tokenDecimals[tokenIn]));
 
   let y = stablePoolComputeY(
     pool,
@@ -88,7 +92,7 @@ function stablePoolGetReturn(pool, tokenIn, amountIn, tokenOut) {
   let tradeFee = dy.mul(pool.fee).div(10000).round(0, 0);
   let amountSwapped = dy.sub(tradeFee);
 
-  return amountSwapped.div(Big(10).pow(18 - usdTokensDecimals[tokenOut])).round(0, 0);
+  return amountSwapped.div(Big(10).pow(18 - tokenDecimals[tokenOut])).round(0, 0);
 }
 
 function stablePoolGetInverseReturn(pool, tokenOut, amountOut, tokenIn) {
@@ -96,7 +100,7 @@ function stablePoolGetInverseReturn(pool, tokenOut, amountOut, tokenIn) {
   let tokenOutIndex = pool.tt.indexOf(tokenOut);
 
   const amountOutWithFee = amountOut.mul(10000).div(10000 - pool.fee).round(0, 0);
-  const cAmountOut = amountOutWithFee.mul(Big(10).pow(18 - usdTokensDecimals[tokenOut]));
+  const cAmountOut = amountOutWithFee.mul(Big(10).pow(18 - tokenDecimals[tokenOut]));
 
   let y = stablePoolComputeY(
     pool,
@@ -108,7 +112,7 @@ function stablePoolGetInverseReturn(pool, tokenOut, amountOut, tokenIn) {
   let cAmountIn = y.sub(pool.cAmounts[tokenInIndex]);
 
   // Adding 1 for internal pool rounding
-  return cAmountIn.div(Big(10).pow(18 - usdTokensDecimals[tokenIn])).add(1).round(0, 0);
+  return cAmountIn.div(Big(10).pow(18 - tokenDecimals[tokenIn])).add(1).round(0, 0);
 }
 
 export function getRefReturn(pool, tokenIn, amountIn, tokenOut) {
@@ -299,7 +303,7 @@ const fetchRefData = async (account) => {
       };
       if (p.stable) {
         p.cAmounts = [...pool.amounts].map((amount, idx) => {
-          let factor = Big(10).pow(18 - usdTokensDecimals[tt[idx]]);
+          let factor = Big(10).pow(18 - tokenDecimals[tt[idx]]);
           return Big(amount).mul(factor);
         });
         p.nCoins = p.cAmounts.length;
