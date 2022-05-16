@@ -15,14 +15,13 @@ import {
   fromTokenBalance,
   Loading,
   OneSkyward,
-  tokenStorageDeposit,
   toTokenBalance,
 } from "../../data/utils";
 import TokenSymbol from "../token/TokenSymbol";
 import AvailableInput from "../common/AvailableInput";
 import { useAccount } from "../../data/account";
 import Big from "big.js";
-import { isTokenRegistered, useToken, WrappedTokens } from "../../data/token";
+import {isTokenRegistered, tokenStorageDeposit, useToken, WrappedTokens} from "../../data/token";
 import TokenBalance from "../token/TokenBalance";
 import * as nearAPI from "near-api-js";
 import { defaultWhitelistedTokens, useRefFinance } from "../../data/refFinance";
@@ -321,7 +320,7 @@ export default function Treasury(props) {
               registration_only: true,
             },
             TGas.mul(5).toFixed(0),
-            (await tokenStorageDeposit(receivingTokens[i])).toFixed(0)
+            (await tokenStorageDeposit(account.near, receivingTokens[i])).toFixed(0)
           ),
         ]);
       }

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { dateToString, Loading, tokenStorageDeposit } from "../../data/utils";
+import { dateToString, Loading } from "../../data/utils";
 import Timer from "react-compound-timer";
 import TokenBalance from "../token/TokenBalance";
 import {
@@ -9,7 +9,7 @@ import {
 } from "../../data/near";
 import TokenSymbol from "../token/TokenSymbol";
 import * as nearAPI from "near-api-js";
-import { useToken } from "../../data/token";
+import {tokenStorageDeposit, useToken} from "../../data/token";
 
 export default function LockupAccount(props) {
   const [loading, setLoading] = useState(false);
@@ -64,7 +64,7 @@ export default function LockupAccount(props) {
             registration_only: true,
           },
           TGas.mul(5).toFixed(0),
-          (await tokenStorageDeposit(NearConfig.skywardTokenAccountId)).toFixed(
+          (await tokenStorageDeposit(account.near, NearConfig.skywardTokenAccountId)).toFixed(
             0
           )
         ),

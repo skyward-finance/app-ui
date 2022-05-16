@@ -14,10 +14,9 @@ import {
   isLowValueSale,
   isSaleWhitelisted,
   Loading,
-  tokenStorageDeposit,
   toTokenBalance,
 } from "../../data/utils";
-import { tokenRegisterStorageAction, useToken } from "../../data/token";
+import {tokenRegisterStorageAction, tokenStorageDeposit, useToken} from "../../data/token";
 import { useAccount } from "../../data/account";
 import {
   IsMainnet,
@@ -327,7 +326,7 @@ export default function Subscription(props) {
               registration_only: true,
             },
             TGas.mul(5).toFixed(0),
-            (await tokenStorageDeposit(sale.inTokenAccountId)).toFixed(0)
+            (await tokenStorageDeposit(account.near, sale.inTokenAccountId)).toFixed(0)
           ),
         ]);
       }

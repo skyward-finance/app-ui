@@ -1,9 +1,9 @@
 import Big from "big.js";
 import ls from "local-storage";
-import { isValidAccountId, keysToCamel, tokenStorageDeposit } from "./utils";
+import {bigMin, isBridgeToken, isValidAccountId, keysToCamel} from "./utils";
 import useSWR from "swr";
 import { useAccount } from "./account";
-import { LsKey, NearConfig, TGas } from "./near";
+import {BridgeTokenStorageDeposit, LsKey, MaxStorageDeposit, NearConfig, TGas, TokenStorageDeposit} from "./near";
 import * as nearAPI from "near-api-js";
 
 const TokenExpirationDuration = 30 * 60 * 1000;
@@ -36,6 +36,27 @@ export const isTokenRegistered = async (account, tokenAccountId, accountId) => {
   return storageBalance && storageBalance.total !== "0";
 };
 
+export const defaultTokenStorageDeposit = async (tokenAccountId) => {
+  return isBridgeToken(tokenAccountId)
+    ? BridgeTokenStorageDeposit
+    : TokenStorageDeposit;
+};
+
+export const tokenStorageDeposit = async (near, tokenAccountId) => {
+  try {
+    const storageBalanceBounds = await near.account.viewFunction(
+      tokenAccountId,
+      "storage_balance_bounds",
+      {}
+    );
+    const storageDeposit = storageBalanceBounds ? Big(storageBalanceBounds.min || "0") : TokenStorageDeposit;
+    return bigMin(storageDeposit, MaxStorageDeposit);
+  } catch (e) {
+    console.error("storage_balance_bounds", e);
+    return defaultTokenStorageDeposit(tokenAccountId);
+  }
+};
+
 export const tokenRegisterStorageAction = async (
   account,
   tokenAccountId,
@@ -53,7 +74,7 @@ export const tokenRegisterStorageAction = async (
           registration_only: true,
         },
         TGas.mul(5).toFixed(0),
-        (await tokenStorageDeposit(tokenAccountId)).toFixed(0)
+        (await tokenStorageDeposit(account.near, tokenAccountId)).toFixed(0)
       ),
     ]);
   }

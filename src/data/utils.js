@@ -1,9 +1,7 @@
 import Big from "big.js";
 import {
-  BridgeTokenStorageDeposit,
   LsKey,
   NearConfig,
-  TokenStorageDeposit,
 } from "./near";
 import React from "react";
 import ls from "local-storage";
@@ -186,12 +184,6 @@ export const computeUsdBalance = (refFinance, tokenAccountId, balance) => {
 
 export const isBridgeToken = (tokenAccountId) => {
   return tokenAccountId.endsWith(".bridge.near");
-};
-
-export const tokenStorageDeposit = async (tokenAccountId) => {
-  return isBridgeToken(tokenAccountId)
-    ? BridgeTokenStorageDeposit
-    : TokenStorageDeposit;
 };
 
 export const isoDate = (d) =>

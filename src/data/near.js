@@ -10,6 +10,7 @@ export const MaxGasPerTransaction2FA = TGas.mul(220);
 export const StorageCostPerByte = Big(10).pow(19);
 export const TokenStorageDeposit = StorageCostPerByte.mul(125);
 export const BridgeTokenStorageDeposit = StorageCostPerByte.mul(1250);
+export const MaxStorageDeposit = Big(10).pow(23);
 export const SkywardRegisterStorageDeposit = StorageCostPerByte.mul(2000);
 export const SubscribeDeposit = StorageCostPerByte.mul(2000);
 export const CreateSaleDeposit = OneNear.mul(10).add(
@@ -68,6 +69,7 @@ export const MainNearConfig = {
   oldRefFinanceToken: "token.ref-finance.near",
   referralId: "skyward-ref.near",
   noStorageTokens: {
+    "usn": true,
     "meta-pool.near": true,
     aurora: true,
   },

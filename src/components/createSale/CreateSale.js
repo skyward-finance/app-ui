@@ -3,14 +3,13 @@ import { useAccount } from "../../data/account";
 import TokenSelect from "../token/TokenSelect";
 import { AccountBalance, BalanceType } from "../account/AccountBalance";
 import AvailableInput from "../common/AvailableInput";
-import { useToken } from "../../data/token";
+import {tokenStorageDeposit, useToken} from "../../data/token";
 import Big from "big.js";
 import {
   fromTokenBalance,
   isoDate,
   Loading,
   skywardUrl,
-  tokenStorageDeposit,
   toTokenBalance,
 } from "../../data/utils";
 import SalePreview from "../sale/SalePreview";
@@ -159,7 +158,7 @@ export default function CreatSale(props) {
               registration_only: true,
             },
             TGas.mul(5).toFixed(0),
-            (await tokenStorageDeposit(outputTokenId)).toFixed(0)
+            (await tokenStorageDeposit(account.near, outputTokenId)).toFixed(0)
           ),
         ]);
       }
@@ -191,7 +190,7 @@ export default function CreatSale(props) {
             registration_only: true,
           },
           TGas.mul(5).toFixed(0),
-          (await tokenStorageDeposit(outputTokenId)).toFixed(0)
+          (await tokenStorageDeposit(account.near, outputTokenId)).toFixed(0)
         ),
       ]);
     }
