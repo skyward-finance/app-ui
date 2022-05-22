@@ -62,6 +62,7 @@ const usdTokensDecimals = {
     6,
   "usn":
     18,
+  "cusd.token.a11bd.near": 24,
 };
 const tokenDecimals = Object.assign({
   "2260fac5e5542a773aa44fbcfedf7c193bc2c599.factory.bridge.near": 8,
@@ -282,7 +283,8 @@ const fetchRefData = async (account) => {
   };
 
   const pools = {};
-  rawPools.forEach((pool, i) => {
+  for (let i = 0; i < rawPools.length; ++i) {
+    const pool = rawPools[i];
     if (pool.pool_kind === SimplePool || pool.pool_kind === StablePool) {
       const tt = pool.token_account_ids;
       const p = {
@@ -302,10 +304,20 @@ const fetchRefData = async (account) => {
         amp: pool.amp || 0,
       };
       if (p.stable) {
+        let shouldSkip = false;
         p.cAmounts = [...pool.amounts].map((amount, idx) => {
-          let factor = Big(10).pow(18 - tokenDecimals[tt[idx]]);
+          const tokenId = tt[idx];
+          if (!(tokenId in tokenDecimals)) {
+            console.log(`Missing token decimals for token ${tokenId} for pool #${i}`);
+            shouldSkip = true;
+            return 0;
+          }
+          let factor = Big(10).pow(18 - tokenDecimals[tokenId]);
           return Big(amount).mul(factor);
         });
+        if (shouldSkip) {
+          continue;
+        }
         p.nCoins = p.cAmounts.length;
         p.nn = Big(Math.pow(p.nCoins, p.nCoins));
         p.ann = Big(p.amp).mul(p.nn);
@@ -317,7 +329,7 @@ const fetchRefData = async (account) => {
         p.tt.forEach((t) => addPools(t, p));
       }
     }
-  });
+  }
 
   const wNEAR = NearConfig.wrapNearAccountId;
   const prices = {};
